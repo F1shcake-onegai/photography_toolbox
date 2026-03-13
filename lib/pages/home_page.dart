@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../services/app_localizations.dart';
 
 class _Feature {
-  final String title;
+  final String titleKey;
   final IconData icon;
   final String route;
 
-  const _Feature({required this.title, required this.icon, required this.route});
+  const _Feature({required this.titleKey, required this.icon, required this.route});
 }
 
 const _features = [
-  _Feature(title: 'Film Quick Note', icon: Icons.note_alt_outlined, route: '/film_quick_note'),
-  _Feature(title: 'Darkroom Clock', icon: Icons.timer_outlined, route: '/darkroom_clock'),
-  _Feature(title: 'Flash Calculator', icon: Icons.flash_on_outlined, route: '/flash_calculator'),
-  _Feature(title: 'Depth of Field', icon: Icons.camera_outlined, route: '/dof_calculator'),
-  _Feature(title: 'Lightpad', icon: Icons.lightbulb_outlined, route: '/lightpad'),
-  _Feature(title: 'Settings', icon: Icons.settings_outlined, route: '/settings'),
+  _Feature(titleKey: 'feature_film_quick_note', icon: Icons.note_alt_outlined, route: '/film_quick_note'),
+  _Feature(titleKey: 'feature_darkroom_clock', icon: Icons.timer_outlined, route: '/darkroom_clock'),
+  _Feature(titleKey: 'feature_flash_calculator', icon: Icons.flash_on_outlined, route: '/flash_calculator'),
+  _Feature(titleKey: 'feature_depth_of_field', icon: Icons.camera_outlined, route: '/dof_calculator'),
+  _Feature(titleKey: 'feature_lightpad', icon: Icons.lightbulb_outlined, route: '/lightpad'),
+  _Feature(titleKey: 'feature_settings', icon: Icons.settings_outlined, route: '/settings'),
 ];
 
 class HomePage extends StatelessWidget {
@@ -24,6 +25,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -37,7 +39,7 @@ class HomePage extends StatelessWidget {
                 children: [
                   const SizedBox(height: 24),
                   Text(
-                    'Photography\nToolbox',
+                    l.t('app_title'),
                     style: Theme.of(context)
                         .textTheme
                         .headlineLarge
@@ -45,7 +47,7 @@ class HomePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Your analog photography companion',
+                    l.t('app_subtitle'),
                     style: Theme.of(context)
                         .textTheme
                         .bodyLarge
@@ -80,12 +82,9 @@ class HomePage extends StatelessWidget {
                 onPressed: () => showAboutDialog(
                   context: context,
                   applicationName: 'Photography Toolbox',
-                  applicationVersion: '1.0.0 (Build Mar 4, 2026)',
+                  applicationVersion: '1.0.1 (Mar 12 Image Picker Fix)',
                   children: [
-                    const Text(
-                        'A companion app for analog photography. '
-                        'Includes tools for flash calculation, '
-                        'depth of field, film notes, and more.'),
+                    Text(l.t('app_about_description')),
                     const SizedBox(height: 12),
                     GestureDetector(
                       onTap: () => launchUrl(Uri.parse(
@@ -98,7 +97,7 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text('by @f1shcake_onegai'),
+                    Text(l.t('app_about_author')),
                   ],
                 ),              ),            ),          ],
         ),
@@ -115,6 +114,7 @@ class _FeatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context);
 
     return Card(
       elevation: 0,
@@ -133,7 +133,7 @@ class _FeatureCard extends StatelessWidget {
               Icon(feature.icon, size: 40, color: colorScheme.primary),
               const SizedBox(height: 12),
               Text(
-                feature.title,
+                l.t(feature.titleKey),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleSmall,
               ),

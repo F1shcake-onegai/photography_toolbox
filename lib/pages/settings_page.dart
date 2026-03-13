@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_drawer.dart';
 import '../services/aperture_settings.dart';
+import '../services/app_localizations.dart';
+import '../services/locale_settings.dart';
+import '../main.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -11,6 +14,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   double _selectedMaxAperture = ApertureSettings.defaultMaxAperture;
+  String? _selectedLocale;
   bool _loaded = false;
 
   @override
@@ -21,29 +25,36 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Future<void> _loadSetting() async {
     final value = await ApertureSettings.load();
+    final locale = await LocaleSettings.load();
     setState(() {
       _selectedMaxAperture = value;
+      _selectedLocale = locale;
       _loaded = true;
     });
   }
 
   Future<void> _save() async {
     await ApertureSettings.save(_selectedMaxAperture);
+    await LocaleSettings.save(_selectedLocale);
     if (mounted) {
+      PhotographyToolboxApp.setLocale(context, _selectedLocale);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Settings saved.')),
+        SnackBar(content: Text(AppLocalizations.of(context).t('settings_saved'))),
       );
     }
   }
 
   void _revoke() {
-    setState(() =>
-        _selectedMaxAperture = ApertureSettings.defaultMaxAperture);
+    setState(() {
+      _selectedMaxAperture = ApertureSettings.defaultMaxAperture;
+      _selectedLocale = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -52,7 +63,7 @@ class _SettingsPageState extends State<SettingsPage> {
           onPressed: () =>
               Navigator.pushReplacementNamed(context, '/'),
         ),
-        title: const Text('Settings'),
+        title: Text(l.t('settings_title')),
       ),
       drawer: const AppDrawer(),
       body: !_loaded
@@ -62,13 +73,50 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Settings',
+                  Text(l.t('settings_heading'),
                       style: Theme.of(context)
                           .textTheme
                           .headlineSmall),
                   const SizedBox(height: 24),
 
-                  Text('Maximum Aperture',
+                  Text(l.t('settings_language'),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: _selectedLocale ?? '',
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder()),
+                    items: [
+                      DropdownMenuItem(
+                          value: '',
+                          child: Text(l.t('settings_follow_system'))),
+                      const DropdownMenuItem(
+                          value: 'en',
+                          child: Text('English')),
+                      const DropdownMenuItem(
+                          value: 'ja',
+                          child: Text('日本語')),
+                      const DropdownMenuItem(
+                          value: 'zh',
+                          child: Text('简体中文')),
+                    ],
+                    onChanged: (v) {
+                      setState(() =>
+                          _selectedLocale = (v == null || v.isEmpty) ? null : v);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l.t('settings_language_desc'),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 24),
+
+                  Text(l.t('settings_max_aperture'),
                       style: TextStyle(
                           fontSize: 12,
                           color: colorScheme.onSurfaceVariant)),
@@ -91,8 +139,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Sets the widest aperture available on '
-                    'aperture sliders across the app.',
+                    l.t('settings_max_aperture_desc'),
                     style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onSurfaceVariant),
@@ -105,14 +152,14 @@ class _SettingsPageState extends State<SettingsPage> {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: _revoke,
-                          child: const Text('Revoke'),
+                          child: Text(l.t('settings_revoke')),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: FilledButton(
                           onPressed: _save,
-                          child: const Text('Save'),
+                          child: Text(l.t('settings_save')),
                         ),
                       ),
                     ],

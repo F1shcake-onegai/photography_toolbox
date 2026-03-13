@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/app_drawer.dart';
 import '../services/aperture_settings.dart';
+import '../services/app_localizations.dart';
 
 class DofCalculatorPage extends StatefulWidget {
   const DofCalculatorPage({super.key});
@@ -20,7 +21,12 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
   List<double> _apertureStops = [];
   int _apertureIndex = 0;
 
-  String _resultText = '';
+  // Structured results
+  String _hyperfocalValue = '';
+  String _rangeValue = '';
+  String _errorText = '';
+
+  bool get _hasResult => _hyperfocalValue.isNotEmpty;
 
   @override
   void initState() {
@@ -45,6 +51,7 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
   }
 
   void _compute() {
+    final l = AppLocalizations.of(context);
     final focalLength =
         double.tryParse(_focalLengthController.text);
     final coc = double.tryParse(_cocController.text) ?? 0.03;
@@ -52,13 +59,19 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
     final s = _subjectDistance;
 
     if (focalLength == null || focalLength <= 0) {
-      setState(
-          () => _resultText = 'Enter a valid focal length.');
+      setState(() {
+        _hyperfocalValue = '';
+        _rangeValue = '';
+        _errorText = l.t('dof_enter_focal_length');
+      });
       return;
     }
     if (coc <= 0) {
-      setState(() =>
-          _resultText = 'Circle of confusion must be positive.');
+      setState(() {
+        _hyperfocalValue = '';
+        _rangeValue = '';
+        _errorText = l.t('dof_coc_positive');
+      });
       return;
     }
 
@@ -78,30 +91,25 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
 
     final dn = dnMm / 1000.0; // back to meters
 
+    final hyperfocal = (h / 1000.0).toStringAsFixed(2);
+
     if (dfDenom <= 0) {
       // Far limit is at infinity
       setState(() {
-        _resultText =
-            'Hyperfocal distance: '
-            '${(h / 1000.0).toStringAsFixed(2)} m\n'
-            'Near limit: ${dn.toStringAsFixed(2)} m\n'
-            'Far limit: Infinity\n'
-            'Total DOF: Infinity';
+        _errorText = '';
+        _hyperfocalValue = '$hyperfocal m';
+        _rangeValue = '${dn.toStringAsFixed(2)} m - \u221e';
       });
       return;
     }
 
     final dfMm = (h * sMm) / dfDenom;
     final df = dfMm / 1000.0;
-    final dof = df - dn;
 
     setState(() {
-      _resultText =
-          'Hyperfocal distance: '
-          '${(h / 1000.0).toStringAsFixed(2)} m\n'
-          'Near limit: ${dn.toStringAsFixed(2)} m\n'
-          'Far limit: ${df.toStringAsFixed(2)} m\n'
-          'Total DOF: ${dof.toStringAsFixed(2)} m';
+      _errorText = '';
+      _hyperfocalValue = '$hyperfocal m';
+      _rangeValue = '${dn.toStringAsFixed(2)} - ${df.toStringAsFixed(2)} m';
     });
   }
 
@@ -118,10 +126,11 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context);
 
     if (_apertureStops.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Depth of Field')),
+        appBar: AppBar(title: Text(l.t('dof_title'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -133,164 +142,232 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
           onPressed: () =>
               Navigator.pushReplacementNamed(context, '/'),
         ),
-        title: const Text('Depth of Field'),
+        title: Text(l.t('dof_title')),
       ),
       drawer: const AppDrawer(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Depth of Field Calculator',
-                style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 16),
-
-            // Focal Length - input box
-            _labeledTextField('Focal Length (mm)',
-                _focalLengthController,
-                hint: 'e.g. 50'),
-            const SizedBox(height: 16),
-
-            // Aperture - slider
-            Text('Aperture',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant)),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Text(
-                    'f/${_apertureStops[_apertureIndex]}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Slider(
-                    value: _apertureIndex.toDouble(),
-                    min: 0,
-                    max: (_apertureStops.length - 1).toDouble(),
-                    divisions: _apertureStops.length - 1,
-                    label:
-                        'f/${_apertureStops[_apertureIndex]}',
-                    onChanged: (v) => setState(() {
-                      _apertureIndex = v.round();
-                    }),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('f/${_apertureStops.first}',
+                  Text(l.t('dof_heading'),
+                      style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 16),
+
+                  // Focal Length - input box
+                  _labeledTextField(l.t('dof_focal_length'),
+                      _focalLengthController,
+                      hint: l.t('dof_focal_length_hint')),
+                  const SizedBox(height: 16),
+
+                  // Aperture - slider
+                  Text(l.t('dof_aperture'),
                       style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           color: colorScheme.onSurfaceVariant)),
-                  Text('f/${_apertureStops.last}',
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Text(
+                          'f/${_apertureStops[_apertureIndex]}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Slider(
+                          value: _apertureIndex.toDouble(),
+                          min: 0,
+                          max: (_apertureStops.length - 1).toDouble(),
+                          divisions: _apertureStops.length - 1,
+                          label:
+                              'f/${_apertureStops[_apertureIndex]}',
+                          onChanged: (v) => setState(() {
+                            _apertureIndex = v.round();
+                          }),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('f/${_apertureStops.first}',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: colorScheme.onSurfaceVariant)),
+                        Text('f/${_apertureStops.last}',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: colorScheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Subject Distance - slider (logarithmic)
+                  Text(l.t('dof_subject_distance'),
                       style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           color: colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 72,
+                        child: Text(
+                            _formatDistance(_subjectDistance),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                    fontWeight: FontWeight.bold)),
+                      ),
+                      Expanded(
+                        child: Slider(
+                          value: math.log(_subjectDistance) /
+                              math.ln10,
+                          min: math.log(0.1) / math.ln10,
+                          max: math.log(100.0) / math.ln10,
+                          divisions: 100,
+                          label:
+                              _formatDistance(_subjectDistance),
+                          onChanged: (v) => setState(() {
+                            _subjectDistance =
+                                math.pow(10, v).toDouble();
+                          }),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('0.1 m',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: colorScheme.onSurfaceVariant)),
+                        Text('100 m',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: colorScheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Circle of Confusion - input box with default
+                  _labeledTextField(
+                      l.t('dof_coc'), _cocController,
+                      hint: l.t('dof_coc_hint')),
+
+                  const SizedBox(height: 16),
+
+                  ElevatedButton.icon(
+                    onPressed: _compute,
+                    icon: const Icon(Icons.calculate),
+                    label: Text(l.t('dof_compute')),
+                  ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Subject Distance - slider (logarithmic)
-            Text('Subject Distance',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant)),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                SizedBox(
-                  width: 72,
-                  child: Text(
-                      _formatDistance(_subjectDistance),
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
-                              fontWeight: FontWeight.bold)),
-                ),
-                Expanded(
-                  child: Slider(
-                    value: math.log(_subjectDistance) /
-                        math.ln10,
-                    min: math.log(0.1) / math.ln10,
-                    max: math.log(100.0) / math.ln10,
-                    divisions: 100,
-                    label:
-                        _formatDistance(_subjectDistance),
-                    onChanged: (v) => setState(() {
-                      _subjectDistance =
-                          math.pow(10, v).toDouble();
-                    }),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('0.1 m',
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: colorScheme.onSurfaceVariant)),
-                  Text('100 m',
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: colorScheme.onSurfaceVariant)),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Circle of Confusion - input box with default
-            _labeledTextField(
-                'Circle of Confusion (mm)', _cocController,
-                hint: '0.03'),
-
-            const SizedBox(height: 16),
-
-            ElevatedButton.icon(
-              onPressed: _compute,
-              icon: const Icon(Icons.calculate),
-              label: const Text('Compute'),
-            ),
-
-            const SizedBox(height: 12),
-
-            Text('Result',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant)),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(_resultText.isEmpty
-                  ? 'No result yet'
-                  : _resultText),
-            ),
-          ],
-        ),
+          ),
+          // Result area at the bottom
+          _buildResultArea(colorScheme, l),
+        ],
       ),
+    );
+  }
+
+  Widget _buildResultArea(ColorScheme colorScheme, AppLocalizations l) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: _hasResult
+          ? Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l.t('dof_hyperfocal_label'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _hyperfocalValue,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l.t('dof_range_label'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _rangeValue,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  _errorText.isNotEmpty ? _errorText : l.t('dof_no_result'),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
     );
   }
 

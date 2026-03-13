@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/app_drawer.dart';
+import '../services/app_localizations.dart';
 
 class LightpadPage extends StatefulWidget {
   const LightpadPage({super.key});
@@ -139,6 +140,7 @@ class _LightpadPageState extends State<LightpadPage> {
 
   Widget _buildEditor(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -147,7 +149,7 @@ class _LightpadPageState extends State<LightpadPage> {
           onPressed: () =>
               Navigator.pushReplacementNamed(context, '/'),
         ),
-        title: const Text('Lightpad'),
+        title: Text(l.t('lightpad_title')),
       ),
       drawer: const AppDrawer(),
       body: SingleChildScrollView(
@@ -204,7 +206,7 @@ class _LightpadPageState extends State<LightpadPage> {
             ),
             const SizedBox(height: 20),
             // Brightness slider
-            Text('Brightness: ${(_brightness * 100).round()}%',
+            Text(l.t('lightpad_brightness', {'value': (_brightness * 100).round().toString()}),
                 style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant)),
@@ -220,7 +222,7 @@ class _LightpadPageState extends State<LightpadPage> {
             const SizedBox(height: 8),
 
             // Transparency slider
-            Text('Transparency: ${(100 - _opacity * 100).round()}%',
+            Text(l.t('lightpad_transparency', {'value': (100 - _opacity * 100).round().toString()}),
                 style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant)),
@@ -242,7 +244,7 @@ class _LightpadPageState extends State<LightpadPage> {
                   child: OutlinedButton.icon(
                     onPressed: _resetColor,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Default White'),
+                    label: Text(l.t('lightpad_default_white')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -250,7 +252,7 @@ class _LightpadPageState extends State<LightpadPage> {
                   child: FilledButton.icon(
                     onPressed: _enterFullscreen,
                     icon: const Icon(Icons.fullscreen),
-                    label: const Text('Fullscreen'),
+                    label: Text(l.t('lightpad_fullscreen')),
                   ),
                 ),
               ],
@@ -263,6 +265,7 @@ class _LightpadPageState extends State<LightpadPage> {
 
 
   void _pickColor() {
+    final l = AppLocalizations.of(context);
     double hue = HSVColor.fromColor(_color).hue;
     double sat = HSVColor.fromColor(_color).saturation;
     double val = HSVColor.fromColor(_color).value;
@@ -336,7 +339,7 @@ class _LightpadPageState extends State<LightpadPage> {
           final preview =
               HSVColor.fromAHSV(1.0, hue, sat, val).toColor();
           return AlertDialog(
-            title: const Text('Pick Color'),
+            title: Text(l.t('lightpad_pick_color')),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -352,8 +355,8 @@ class _LightpadPageState extends State<LightpadPage> {
                   // Hex input
                   TextField(
                     controller: hexCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Hex',
+                    decoration: InputDecoration(
+                      labelText: l.t('lightpad_hex'),
                       prefixText: '#',
                       border: OutlineInputBorder(),
                     ),
@@ -420,7 +423,7 @@ class _LightpadPageState extends State<LightpadPage> {
                   valCtrl.dispose();
                   Navigator.pop(ctx);
                 },
-                child: const Text('Cancel'),
+                child: Text(l.t('lightpad_cancel')),
               ),
               FilledButton(
                 onPressed: () {
@@ -435,7 +438,7 @@ class _LightpadPageState extends State<LightpadPage> {
                   valCtrl.dispose();
                   Navigator.pop(ctx);
                 },
-                child: const Text('Select'),
+                child: Text(l.t('lightpad_select')),
               ),
             ],
           );

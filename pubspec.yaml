@@ -1,13 +1,15 @@
 name: photography_toolbox
 description: "A companion app for analog photography."
 publish_to: 'none'
-version: 1.0.0
+version: 1.0.1
 
 environment:
   sdk: ^3.10.3
 
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
   image_picker: ^1.2.1
   path_provider: ^2.1.5
@@ -21,3 +23,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/i18n/
+    - LICENSE

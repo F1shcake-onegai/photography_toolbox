@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_drawer.dart';
 import '../services/film_storage.dart';
+import '../services/app_localizations.dart';
 import 'roll_detail_page.dart';
 
 class FilmQuickNotePage extends StatefulWidget {
@@ -29,6 +30,7 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
   }
 
   Future<void> _addRoll() async {
+    final l = AppLocalizations.of(context);
     final brandCtrl = TextEditingController();
     final modelCtrl = TextEditingController();
     final isoCtrl = TextEditingController();
@@ -36,24 +38,24 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('New Film Roll'),
+        title: Text(l.t('film_new_roll')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: brandCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Brand',
-                hintText: 'e.g. Kodak',
+              decoration: InputDecoration(
+                labelText: l.t('film_brand'),
+                hintText: l.t('film_brand_hint'),
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: modelCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Model',
-                hintText: 'e.g. Portra 400',
+              decoration: InputDecoration(
+                labelText: l.t('film_model'),
+                hintText: l.t('film_model_hint'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -61,9 +63,9 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
             TextField(
               controller: isoCtrl,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Sensitivity (ISO)',
-                hintText: 'e.g. 400',
+              decoration: InputDecoration(
+                labelText: l.t('film_sensitivity'),
+                hintText: l.t('film_sensitivity_hint'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -72,11 +74,11 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.t('film_cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Create'),
+            child: Text(l.t('film_create')),
           ),
         ],
       ),
@@ -119,6 +121,7 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -127,7 +130,7 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
           onPressed: () =>
               Navigator.pushReplacementNamed(context, '/'),
         ),
-        title: const Text('Film Quick Note'),
+        title: Text(l.t('film_title')),
       ),
       drawer: const AppDrawer(),
       floatingActionButton: FloatingActionButton(
@@ -145,13 +148,13 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
                           size: 64,
                           color: colorScheme.onSurfaceVariant),
                       const SizedBox(height: 16),
-                      Text('No film rolls yet',
+                      Text(l.t('film_no_rolls'),
                           style: TextStyle(
                               fontSize: 18,
                               color:
                                   colorScheme.onSurfaceVariant)),
                       const SizedBox(height: 8),
-                      Text('Tap + to add one',
+                      Text(l.t('film_add_hint'),
                           style: TextStyle(
                               fontSize: 14,
                               color:
@@ -165,7 +168,7 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
                   itemBuilder: (context, index) {
                     final roll = _rolls[index];
                     final shots = (roll['shots'] as List?) ?? [];
-                    return Card(                      elevation: 0,                      shape: RoundedRectangleBorder(                        borderRadius: BorderRadius.circular(12),                        side: BorderSide(                            color: colorScheme.outlineVariant),                      ),                      child: InkWell(                        borderRadius: BorderRadius.circular(12),                        onTap: () => _openRoll(roll),                        child: Padding(                          padding: const EdgeInsets.all(16),                          child: Column(                            crossAxisAlignment:                                CrossAxisAlignment.start,                            children: [                              Row(                                children: [                                  Icon(Icons.camera_roll,                                      color: colorScheme.primary),                                  const SizedBox(width: 12),                                  Expanded(                                    child: Text(                                        '${roll["brand"]} ${roll["model"]}',                                        style: Theme.of(context)                                            .textTheme                                            .titleSmall),                                  ),                                  Text(                                      _formatDate(roll["id"] as String),                                      style: TextStyle(                                          fontSize: 11,                                          color: colorScheme                                              .onSurfaceVariant)),                                ],                              ),                              const SizedBox(height: 4),                              Padding(                                padding:                                    const EdgeInsets.only(left: 36),                                child: Text(                                    'ISO ${roll["sensitivity"]}'                                    ' u2022 ${shots.length} shots',                                    style: TextStyle(                                        fontSize: 13,                                        color: colorScheme                                            .onSurfaceVariant)),                              ),                              if ((roll["comments"] as String?)                                      ?.isNotEmpty ==                                  true)                                Padding(                                  padding: const EdgeInsets.only(                                      left: 36, top: 4),                                  child: Text(                                      roll["comments"] as String,                                      maxLines: 1,                                      overflow:                                          TextOverflow.ellipsis,                                      style: TextStyle(                                          fontSize: 12,                                          fontStyle:                                              FontStyle.italic,                                          color: colorScheme                                              .onSurfaceVariant)),                                ),                            ],                          ),                        ),                      ),                    );
+                    return Card(                      elevation: 0,                      shape: RoundedRectangleBorder(                        borderRadius: BorderRadius.circular(12),                        side: BorderSide(                            color: colorScheme.outlineVariant),                      ),                      child: InkWell(                        borderRadius: BorderRadius.circular(12),                        onTap: () => _openRoll(roll),                        child: Padding(                          padding: const EdgeInsets.all(16),                          child: Column(                            crossAxisAlignment:                                CrossAxisAlignment.start,                            children: [                              Row(                                children: [                                  Icon(Icons.camera_roll,                                      color: colorScheme.primary),                                  const SizedBox(width: 12),                                  Expanded(                                    child: Text(                                        '${roll["brand"]} ${roll["model"]}',                                        style: Theme.of(context)                                            .textTheme                                            .titleSmall),                                  ),                                  Text(                                      _formatDate(roll["id"] as String),                                      style: TextStyle(                                          fontSize: 11,                                          color: colorScheme                                              .onSurfaceVariant)),                                ],                              ),                              const SizedBox(height: 4),                              Padding(                                padding:                                    const EdgeInsets.only(left: 36),                                child: Text(                                    'ISO ${roll["sensitivity"]}'                                    ' \u2022 ${l.t("film_shots_count", {"count": shots.length.toString()})}',                                    style: TextStyle(                                        fontSize: 13,                                        color: colorScheme                                            .onSurfaceVariant)),                              ),                              if ((roll["comments"] as String?)                                      ?.isNotEmpty ==                                  true)                                Padding(                                  padding: const EdgeInsets.only(                                      left: 36, top: 4),                                  child: Text(                                      roll["comments"] as String,                                      maxLines: 1,                                      overflow:                                          TextOverflow.ellipsis,                                      style: TextStyle(                                          fontSize: 12,                                          fontStyle:                                              FontStyle.italic,                                          color: colorScheme                                              .onSurfaceVariant)),                                ),                            ],                          ),                        ),                      ),                    );
                   },
                 ),
     );

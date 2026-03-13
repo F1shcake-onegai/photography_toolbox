@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/app_drawer.dart';
 import '../services/aperture_settings.dart';
+import '../services/app_localizations.dart';
 
 class FlashCalculatorPage extends StatefulWidget {
   const FlashCalculatorPage({super.key});
@@ -35,7 +36,9 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
     '1/64': 0.015625,
   };
 
-  String _resultText = '';
+  // Structured results: list of (label, value) pairs
+  List<(String, String)> _resultItems = [];
+  String _errorText = '';
 
   @override
   void initState() {
@@ -63,6 +66,7 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
   double? _parse(String? s) => s == null ? null : double.tryParse(s);
 
   void _compute() {
+    final l = AppLocalizations.of(context);
     final gn = _parse(_gnController.text);
     final distance = _distance;
     final fstop = _apertureStops[_apertureIndex];
@@ -71,7 +75,10 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
     final powerFraction = _powerMap[flashPowerKey] ?? 1.0;
 
     if (gn == null) {
-      setState(() => _resultText = 'Enter a Guide Number.');
+      setState(() {
+        _resultItems = [];
+        _errorText = l.t('flash_enter_gn');
+      });
       return;
     }
 
@@ -82,11 +89,14 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
       final requiredPowerFraction = math.pow(requiredGN / gnIso, 2).toDouble();
 
       if (requiredPowerFraction >= 1.0) {
-        setState(() => _resultText = 'Required power: >= 1. Full power required.');
+        setState(() {
+          _resultItems = [];
+          _errorText = l.t('flash_result_full_power');
+        });
         return;
       }
 
-      // Find the nearest standard power step (closest by absolute difference)
+      // Find the nearest standard power step
       String suggestedKey = _powerMap.keys.first;
       double suggestedVal = _powerMap[suggestedKey]!;
       double bestDiff = (suggestedVal - requiredPowerFraction).abs();
@@ -99,31 +109,41 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
         }
       }
 
-      // Show signed offset (suggested - required), formatted
       final offset = suggestedVal - requiredPowerFraction;
       final offsetSign = offset >= 0 ? '+' : '-';
       final offsetAbs = offset.abs();
+      final offsetStr = offsetAbs < 0.0005
+          ? ''
+          : ' ($offsetSign${offsetAbs.toStringAsFixed(3)})';
 
       final pct = (requiredPowerFraction * 100).clamp(0.0, 100.0);
+
       setState(() {
-        final offsetStr = offsetAbs < 0.0005
-            ? ''
-            : ' ($offsetSign${offsetAbs.toStringAsFixed(3)})';
-        _resultText =
-            'Required power fraction: ${requiredPowerFraction.toStringAsFixed(3)}'
-            ' (\u2248 ${pct.toStringAsFixed(1)}%).\n'
-            'Flash Power Result: $suggestedKey$offsetStr';
+        _errorText = '';
+        _resultItems = [
+          (l.t('flash_result_power_label'),
+              '${requiredPowerFraction.toStringAsFixed(3)} (\u2248 ${pct.toStringAsFixed(1)}%)'),
+          (l.t('flash_result_suggested_label'),
+              '$suggestedKey$offsetStr'),
+        ];
       });
     } else {
       final gnAtPower = gnIso * math.sqrt(powerFraction);
       if (gnAtPower <= 0) {
-        setState(() => _resultText = 'Invalid GN or power value.');
+        setState(() {
+          _resultItems = [];
+          _errorText = l.t('flash_result_invalid');
+        });
         return;
       }
       final calcDistance = gnAtPower / fstop;
-      setState(() => _resultText =
-          'Calculated distance: ${calcDistance.toStringAsFixed(2)}m'
-          ' (using power $flashPowerKey)');
+      setState(() {
+        _errorText = '';
+        _resultItems = [
+          (l.t('flash_result_distance_label'),
+              '${calcDistance.toStringAsFixed(2)} m'),
+        ];
+      });
     }
   }
 
@@ -138,10 +158,11 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context);
 
     if (_apertureStops.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Flash Calculator')),
+        appBar: AppBar(title: Text(l.t('flash_title'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -153,222 +174,268 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
           onPressed: () =>
               Navigator.pushReplacementNamed(context, '/'),
         ),
-        title: const Text('Flash Calculator'),
+        title: Text(l.t('flash_title')),
       ),
       drawer: const AppDrawer(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Flash Calculator',
-                style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(_calculatePower
-                    ? 'Mode: Calculate Flash Power'
-                    : 'Mode: Calculate Distance'),
-                Switch(
-                  value: _calculatePower,
-                  onChanged: (v) => setState(() {
-                    _calculatePower = v;
-                    _compute();
-                  }),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Guide Number - text field
-            _labeledTextField(
-                'Guide Number (GN)', _gnController,
-                hint: 'e.g. 60'),
-            const SizedBox(height: 16),
-
-            // F-stop / Aperture - slider
-            Text('F-stop / Aperture',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant)),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Text(
-                    'f/${_apertureStops[_apertureIndex]}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Slider(
-                    value: _apertureIndex.toDouble(),
-                    min: 0,
-                    max: (_apertureStops.length - 1).toDouble(),
-                    divisions: _apertureStops.length - 1,
-                    label:
-                        'f/${_apertureStops[_apertureIndex]}',
-                    onChanged: (v) => setState(() {
-                      _apertureIndex = v.round();
-                    }),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('f/${_apertureStops.first}',
+                  Text(l.t('flash_title'),
+                      style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(_calculatePower
+                          ? l.t('flash_mode_power')
+                          : l.t('flash_mode_distance')),
+                      Switch(
+                        value: _calculatePower,
+                        onChanged: (v) => setState(() {
+                          _calculatePower = v;
+                          _compute();
+                        }),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Guide Number - text field
+                  _labeledTextField(
+                      l.t('flash_guide_number'), _gnController,
+                      hint: l.t('flash_guide_number_hint')),
+                  const SizedBox(height: 16),
+
+                  // F-stop / Aperture - slider
+                  Text(l.t('flash_fstop'),
                       style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           color: colorScheme.onSurfaceVariant)),
-                  Text('f/${_apertureStops.last}',
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Text(
+                          'f/${_apertureStops[_apertureIndex]}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Slider(
+                          value: _apertureIndex.toDouble(),
+                          min: 0,
+                          max: (_apertureStops.length - 1).toDouble(),
+                          divisions: _apertureStops.length - 1,
+                          label:
+                              'f/${_apertureStops[_apertureIndex]}',
+                          onChanged: (v) => setState(() {
+                            _apertureIndex = v.round();
+                          }),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('f/${_apertureStops.first}',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: colorScheme.onSurfaceVariant)),
+                        Text('f/${_apertureStops.last}',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: colorScheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Distance - logarithmic slider
+                  Text(l.t('flash_distance'),
                       style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           color: colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 72,
+                        child: Text(
+                            _formatDistance(_distance),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                    fontWeight: FontWeight.bold)),
+                      ),
+                      Expanded(
+                        child: Slider(
+                          value: math.log(_distance) / math.ln10,
+                          min: math.log(0.5) / math.ln10,
+                          max: math.log(50.0) / math.ln10,
+                          divisions: 100,
+                          label: _formatDistance(_distance),
+                          onChanged: !_calculatePower ? null : (v) => setState(() {
+                            _distance =
+                                math.pow(10, v).toDouble();
+                          }),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('0.5 m',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: colorScheme.onSurfaceVariant)),
+                        Text('50 m',
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: colorScheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Flash Power - discrete slider
+                  Text(l.t('flash_power'),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Text(
+                          _powerKeys[_powerIndex],
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Slider(
+                          value: _powerIndex.toDouble(),
+                          min: 0,
+                          max: (_powerKeys.length - 1).toDouble(),
+                          divisions: _powerKeys.length - 1,
+                          label: _powerKeys[_powerIndex],
+                          onChanged: _calculatePower ? null : (v) => setState(() {
+                            _powerIndex = v.round();
+                          }),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_powerKeys.first,
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: colorScheme.onSurfaceVariant)),
+                        Text(_powerKeys.last,
+                            style: TextStyle(
+                                fontSize: 10,
+                                color: colorScheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // ISO - text field
+                  _labeledTextField(
+                      l.t('flash_iso'), _isoController,
+                      hint: l.t('flash_iso_hint')),
+                  const SizedBox(height: 16),
+
+                  ElevatedButton.icon(
+                    onPressed: _compute,
+                    icon: const Icon(Icons.calculate),
+                    label: Text(l.t('flash_compute')),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            // Distance - logarithmic slider
-            Text('Distance',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant)),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                SizedBox(
-                  width: 72,
-                  child: Text(
-                      _formatDistance(_distance),
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
-                              fontWeight: FontWeight.bold)),
-                ),
-                Expanded(
-                  child: Slider(
-                    value: math.log(_distance) / math.ln10,
-                    min: math.log(0.5) / math.ln10,
-                    max: math.log(50.0) / math.ln10,
-                    divisions: 100,
-                    label: _formatDistance(_distance),
-                    onChanged: !_calculatePower ? null : (v) => setState(() {
-                      _distance =
-                          math.pow(10, v).toDouble();
-                    }),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('0.5 m',
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: colorScheme.onSurfaceVariant)),
-                  Text('50 m',
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: colorScheme.onSurfaceVariant)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Flash Power - discrete slider
-            Text('Flash Power',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant)),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Text(
-                    _powerKeys[_powerIndex],
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Slider(
-                    value: _powerIndex.toDouble(),
-                    min: 0,
-                    max: (_powerKeys.length - 1).toDouble(),
-                    divisions: _powerKeys.length - 1,
-                    label: _powerKeys[_powerIndex],
-                    onChanged: _calculatePower ? null : (v) => setState(() {
-                      _powerIndex = v.round();
-                    }),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(_powerKeys.first,
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: colorScheme.onSurfaceVariant)),
-                  Text(_powerKeys.last,
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: colorScheme.onSurfaceVariant)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // ISO - text field
-            _labeledTextField(
-                'ISO / Sensitivity', _isoController,
-                hint: 'e.g. 100'),
-            const SizedBox(height: 16),
-
-            ElevatedButton.icon(
-              onPressed: _compute,
-              icon: const Icon(Icons.calculate),
-              label: const Text('Compute'),
-            ),
-            const SizedBox(height: 12),
-
-            Text('Result',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant)),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                  _resultText.isEmpty
-                      ? 'No result yet'
-                      : _resultText),
-            ),
-          ],
-        ),
+          ),
+          // Result area at the bottom
+          _buildResultArea(colorScheme, l),
+        ],
       ),
+    );
+  }
+
+  Widget _buildResultArea(ColorScheme colorScheme, AppLocalizations l) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: _resultItems.isNotEmpty
+          ? Row(
+              children: [
+                for (int i = 0; i < _resultItems.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _resultItems[i].$1,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _resultItems[i].$2,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            )
+          : Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  _errorText.isNotEmpty ? _errorText : l.t('flash_no_result'),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
     );
   }
 

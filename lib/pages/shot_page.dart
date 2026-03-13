@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/film_storage.dart';
+import '../services/app_localizations.dart';
 
 class ShotPage extends StatefulWidget {
   final int defaultSequence;
@@ -24,6 +26,11 @@ class _ShotPageState extends State<ShotPage> {
   final _picker = ImagePicker();
 
   bool get _isEditing => widget.existingShot != null;
+
+  static bool get _isMobilePlatform =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+       defaultTargetPlatform == TargetPlatform.iOS);
 
   @override
   void initState() {
@@ -52,13 +59,15 @@ class _ShotPageState extends State<ShotPage> {
       final saved = await File(xfile.path).copy(
           '$imgDir/${DateTime.now().millisecondsSinceEpoch}.jpg');
       setState(() => _imagePath = saved.path);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('image_picker error: $e');
       if (mounted) {
+        final l = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(source == ImageSource.camera
-                ? 'Camera is not available on this platform.'
-                : 'Gallery is not available on this platform.'),
+                ? l.t('shot_camera_unavailable')
+                : l.t('shot_gallery_unavailable')),
           ),
         );
       }
@@ -83,6 +92,7 @@ class _ShotPageState extends State<ShotPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context);
     final hasImage = _imagePath != null &&
         _imagePath!.isNotEmpty &&
         File(_imagePath!).existsSync();
@@ -93,7 +103,7 @@ class _ShotPageState extends State<ShotPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(_isEditing ? 'Edit Shot' : 'New Shot'),
+        title: Text(_isEditing ? l.t('shot_edit_title') : l.t('shot_new_title')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -101,7 +111,7 @@ class _ShotPageState extends State<ShotPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Sequence number
-            Text('Sequence Number',
+            Text(l.t('shot_sequence'),
                 style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant)),
@@ -114,7 +124,7 @@ class _ShotPageState extends State<ShotPage> {
             ),
             const SizedBox(height: 20),
             // Photo section
-            Text('Photo',
+            Text(l.t('shot_photo'),
                 style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant)),
@@ -148,30 +158,32 @@ class _ShotPageState extends State<ShotPage> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _takePhoto,
-                    icon: const Icon(Icons.camera_alt),
-                    label: Text(hasImage
-                        ? 'Retake'
-                        : 'Camera'),
+                if (_isMobilePlatform) ...[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _takePhoto,
+                      icon: const Icon(Icons.camera_alt),
+                      label: Text(hasImage
+                          ? l.t('shot_retake')
+                          : l.t('shot_camera')),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
+                  const SizedBox(width: 12),
+                ],
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _pickFromGallery,
                     icon: const Icon(Icons.photo_library),
                     label: Text(hasImage
-                        ? 'Replace'
-                        : 'Gallery'),
+                        ? l.t('shot_replace')
+                        : l.t('shot_gallery')),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
             // Comment section
-            Text('Comment',
+            Text(l.t('shot_comment'),
                 style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant)),
@@ -179,8 +191,8 @@ class _ShotPageState extends State<ShotPage> {
             TextField(
               controller: _commentCtrl,
               maxLines: 3,
-              decoration: const InputDecoration(
-                hintText: 'Add a note about this shot...',
+              decoration: InputDecoration(
+                hintText: l.t('shot_comment_hint'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -189,7 +201,7 @@ class _ShotPageState extends State<ShotPage> {
             FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.save),
-              label: const Text('Save'),
+              label: Text(l.t('shot_save')),
             ),
           ],
         ),

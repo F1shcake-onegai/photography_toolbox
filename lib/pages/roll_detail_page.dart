@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/film_storage.dart';
+import '../services/app_localizations.dart';
 import 'shot_page.dart';
 
 class RollDetailPage extends StatefulWidget {
@@ -98,23 +99,22 @@ class _RollDetailPageState extends State<RollDetailPage> {
 
 
   Future<void> _deleteRoll() async {
+    final l = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Roll'),
-        content: const Text(
-            'Are you sure you want to delete this roll? '
-            'This cannot be undone.'),
+        title: Text(l.t('roll_delete_title')),
+        content: Text(l.t('roll_delete_message')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.t('roll_cancel')),
           ),
           TextButton(
             style: TextButton.styleFrom(
                 foregroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l.t('roll_delete')),
           ),
         ],
       ),
@@ -128,10 +128,11 @@ class _RollDetailPageState extends State<RollDetailPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l = AppLocalizations.of(context);
 
     if (_roll == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Roll')),
+        appBar: AppBar(title: Text(l.t('roll_title'))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -186,7 +187,7 @@ class _RollDetailPageState extends State<RollDetailPage> {
             ),
             const SizedBox(height: 16),
             // Comments
-            Text('Comments',
+            Text(l.t('roll_comments'),
                 style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant)),
@@ -195,8 +196,8 @@ class _RollDetailPageState extends State<RollDetailPage> {
               controller: _commentCtrl,
               maxLines: 3,
               onChanged: _onCommentChanged,
-              decoration: const InputDecoration(
-                hintText: 'Add notes about this roll...',
+              decoration: InputDecoration(
+                hintText: l.t('roll_comments_hint'),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -207,14 +208,14 @@ class _RollDetailPageState extends State<RollDetailPage> {
               mainAxisAlignment:
                   MainAxisAlignment.spaceBetween,
               children: [
-                Text('Shots (${_shots.length})',
+                Text(l.t('roll_shots_header', {'count': _shots.length.toString()}),
                     style: Theme.of(context)
                         .textTheme
                         .titleSmall),
                 TextButton.icon(
                   onPressed: _addShot,
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Shot'),
+                  label: Text(l.t('roll_add_shot')),
                 ),
               ],
             ),
@@ -227,7 +228,7 @@ class _RollDetailPageState extends State<RollDetailPage> {
                       padding:
                           const EdgeInsets.symmetric(
                               vertical: 32),
-                      child: Text('No shots yet',
+                      child: Text(l.t('roll_no_shots'),
                           style: TextStyle(
                               color: colorScheme
                                   .onSurfaceVariant)),
