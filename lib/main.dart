@@ -14,6 +14,9 @@ import 'pages/settings_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
   LicenseRegistry.addLicense(() async* {
     final license = await rootBundle.loadString('LICENSE');
     yield LicenseEntryWithLineBreaks(['Photography Toolbox'], license);

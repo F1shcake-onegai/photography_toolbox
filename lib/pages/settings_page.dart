@@ -85,7 +85,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           color: colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: _selectedLocale ?? '',
+                    initialValue: _selectedLocale ?? '',
                     decoration: const InputDecoration(
                         border: OutlineInputBorder()),
                     items: [
