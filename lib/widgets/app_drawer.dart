@@ -33,8 +33,8 @@ class AppDrawer extends StatelessWidget {
           _DrawerItem(
             icon: Icons.timer_outlined,
             title: l.t('feature_darkroom_clock'),
-            route: '/darkroom_clock',
-            selected: currentRoute == '/darkroom_clock',
+            route: '/darkroom_timer',
+            selected: currentRoute == '/darkroom_timer',
           ),
           _DrawerItem(
             icon: Icons.flash_on_outlined,

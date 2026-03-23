@@ -12,7 +12,7 @@ class _Feature {
 
 const _features = [
   _Feature(titleKey: 'feature_film_quick_note', icon: Icons.note_alt_outlined, route: '/film_quick_note'),
-  _Feature(titleKey: 'feature_darkroom_clock', icon: Icons.timer_outlined, route: '/darkroom_clock'),
+  _Feature(titleKey: 'feature_darkroom_clock', icon: Icons.timer_outlined, route: '/darkroom_timer'),
   _Feature(titleKey: 'feature_flash_calculator', icon: Icons.flash_on_outlined, route: '/flash_calculator'),
   _Feature(titleKey: 'feature_depth_of_field', icon: Icons.camera_outlined, route: '/dof_calculator'),
   _Feature(titleKey: 'feature_lightpad', icon: Icons.lightbulb_outlined, route: '/lightpad'),

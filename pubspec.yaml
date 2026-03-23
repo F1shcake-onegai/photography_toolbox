@@ -1,7 +1,7 @@
 name: photography_toolbox
 description: "A companion app for analog photography."
 publish_to: 'none'
-version: 1.0.1
+version: 0.1.2
 
 environment:
   sdk: ^3.10.3
@@ -15,6 +15,14 @@ dependencies:
   path_provider: ^2.1.5
   shared_preferences: ^2.5.4
   url_launcher: ^6.3.2
+  share_plus: ^10.1.4
+  file_picker: ^8.1.7
+  wakelock_plus: ^1.2.8
+  flutter_local_notifications: ^19.0.0
+
+dependency_overrides:
+  flutter_local_notifications_windows:
+    path: windows_notifications_stub
 
 dev_dependencies:
   flutter_test:
@@ -26,3 +34,13 @@ flutter:
   assets:
     - assets/i18n/
     - LICENSE
+  fonts:
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans.ttf
+    - family: NotoSansJP
+      fonts:
+        - asset: assets/fonts/NotoSansJP.ttf
+    - family: NotoSansSC
+      fonts:
+        - asset: assets/fonts/NotoSansSC.ttf

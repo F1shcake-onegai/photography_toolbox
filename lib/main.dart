@@ -8,7 +8,7 @@ import 'pages/home_page.dart';
 import 'pages/flash_calculator_page.dart';
 import 'pages/dof_calculator_page.dart';
 import 'pages/film_quick_note_page.dart';
-import 'pages/darkroom_clock_page.dart';
+import 'pages/darkroom_timer_page.dart';
 import 'pages/lightpad_page.dart';
 import 'pages/settings_page.dart';
 
@@ -64,11 +64,15 @@ class _PhotographyToolboxAppState extends State<PhotographyToolboxApp> {
         colorSchemeSeed: Colors.blueGrey,
         brightness: Brightness.light,
         useMaterial3: true,
+        fontFamily: 'NotoSans',
+        fontFamilyFallback: const ['NotoSansJP', 'NotoSansSC'],
       ),
       darkTheme: ThemeData(
         colorSchemeSeed: Colors.blueGrey,
         brightness: Brightness.dark,
         useMaterial3: true,
+        fontFamily: 'NotoSans',
+        fontFamilyFallback: const ['NotoSansJP', 'NotoSansSC'],
       ),
       themeMode: ThemeMode.system,
       locale: _locale,
@@ -99,7 +103,7 @@ class _PhotographyToolboxAppState extends State<PhotographyToolboxApp> {
         '/flash_calculator': (context) => const FlashCalculatorPage(),
         '/dof_calculator': (context) => const DofCalculatorPage(),
         '/film_quick_note': (context) => const FilmQuickNotePage(),
-        '/darkroom_clock': (context) => const DarkroomClockPage(),
+        '/darkroom_timer': (context) => const DarkroomTimerPage(),
         '/lightpad': (context) => const LightpadPage(),
         '/settings': (context) => const SettingsPage(),
       },

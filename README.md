@@ -69,12 +69,15 @@ lib/
     roll_detail_page.dart         # Single roll view with shots
     shot_page.dart                # Add/edit a shot
     lightpad_page.dart            # Lightpad with color picker
-    darkroom_clock_page.dart      # Darkroom clock (placeholder)
+    darkroom_timer_page.dart      # Darkroom timer recipe list
+    recipe_edit_page.dart         # Create/edit darkroom recipes
+    timer_running_page.dart       # Active countdown timer with step progression
     settings_page.dart            # App settings
   services/
     aperture_settings.dart        # Shared aperture stop configuration
     app_localizations.dart        # JSON-based i18n with LocalizationsDelegate
     film_storage.dart             # JSON-based local storage for film rolls
+    recipe_storage.dart           # JSON-based local storage for darkroom recipes
     locale_settings.dart          # Persists locale preference
   widgets/
     app_drawer.dart               # Navigation drawer for feature pages
