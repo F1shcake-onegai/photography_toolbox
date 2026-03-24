@@ -69,6 +69,8 @@
 	<string>This app accesses your photo library to attach images to film shots.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app saves photos to your photo library when you download shot images.</string>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<false/>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
