@@ -11,7 +11,7 @@ Calculate flash power or subject distance using guide number, ISO, and aperture.
 Compute hyperfocal distance and depth of field range from focal length, aperture, subject distance, and circle of confusion. Results show hyperfocal distance and near–far range at the bottom of the screen.
 
 ### Film Quick Note
-Log your film rolls and individual shots. Each roll stores brand, model, ISO, comments, and a list of shots. Shots can include a sequence number, photo (camera on mobile, file picker on desktop), and notes. Data is saved locally as JSON.
+Log your film rolls and individual shots. Each roll stores brand, model, ISO, comments, and a list of shots. Shots can include a sequence number, photo (camera on mobile, file picker on desktop), and notes. Tap a shot image to open a full-screen viewer with pinch-to-zoom and save-to-gallery. Search, sort, and filter your rolls by brand and ISO. Share rolls as `.ptroll` files with selectable shots, and import rolls received from others. Data is saved locally as JSON.
 
 ### Lightpad
 Turn your screen into a light source with adjustable color, brightness, and transparency. Includes a fullscreen mode — long-press for 2 seconds to exit. Color picker supports hex input and HSV sliders.
@@ -23,12 +23,13 @@ Compensate for reciprocity failure in long exposures. Select from 20 built-in fi
 Camera-based light meter that reads live EV from your scene. Choose between center-weighted, matrix, and average metering modes, or tap the preview to set a point metering spot. Three exposure parameters (aperture, shutter speed, ISO) can be adjusted with arrow buttons; tap any parameter to make it the calculated one. Configurable exposure step size (1, 1/2, 1/3, 1/4 stops). Desktop shows a manual EV input fallback.
 
 ### Darkroom Timer
-Create and manage darkroom development recipes with multi-step timers. Each recipe includes film stock, developer, dilution, temperature compensation, and agitation settings. The running timer features an Apple Clock-style rolling step list, push notifications, haptic feedback, and a full darkroom safelight mode with red-tinted UI.
+Create and manage darkroom development recipes with multi-step timers. Each recipe includes film stock, developer, dilution, process type (B&W/color negative/positive), temperature compensation, notes, and agitation settings. Built-in C-41 and E-6 recipes are included out of the box. Search, sort, and filter recipes by film stock, developer, process type, and dilution. Duplicate recipes to create variations. Share recipes as `.ptrecipe` files and import recipes from others. The running timer features an Apple Clock-style rolling step list, push notifications, haptic feedback, and a full darkroom safelight mode with red-tinted UI.
 
 ### Settings
 - **Maximum aperture**: Configure the widest aperture stop available across calculators (e.g., f/0.95, f/1.0, f/1.4). Shared by Flash Calculator and Depth of Field Calculator.
 - **Exposure step**: Sets the increment size (1, 1/2, 1/3, 1/4 stops) for the light meter.
 - **Language**: English, Japanese (日本語), Simplified Chinese (简体中文), or follow system locale.
+- **Default import action**: Choose how to handle duplicates when importing recipes or rolls (ask, replace, skip, or import as copy).
 
 ## Localization
 
@@ -72,26 +73,31 @@ lib/
     home_page.dart                # Home screen with feature grid
     flash_calculator_page.dart    # Flash calculator
     dof_calculator_page.dart      # Depth of field calculator
-    film_quick_note_page.dart     # Film roll list
-    roll_detail_page.dart         # Single roll view with shots
+    film_quick_note_page.dart     # Film roll list with search/sort/filter
+    roll_detail_page.dart         # Single roll view with shots grid and sharing
     shot_page.dart                # Add/edit a shot
+    image_viewer_page.dart        # Full-screen image viewer with pinch-to-zoom
     lightpad_page.dart            # Lightpad with color picker
     reciprocity_calculator_page.dart # Reciprocity failure calculator
     light_meter_page.dart         # Camera-based light meter
-    darkroom_timer_page.dart      # Darkroom timer recipe list
+    darkroom_timer_page.dart      # Recipe list with search/sort/filter
     recipe_edit_page.dart         # Create/edit darkroom recipes
     timer_running_page.dart       # Active countdown timer with step progression
     settings_page.dart            # App settings
   services/
     aperture_settings.dart        # Shared aperture stop configuration
     app_localizations.dart        # JSON-based i18n with LocalizationsDelegate
-    film_storage.dart             # JSON-based local storage for film rolls
-    recipe_storage.dart           # JSON-based local storage for darkroom recipes
+    file_intent_service.dart      # Platform channel for OS file associations
+    film_storage.dart             # CRUD + import/export for film rolls
+    import_export_service.dart    # Centralized .ptrecipe/.ptroll file handling
+    import_settings.dart          # Duplicate import action preference
+    recipe_storage.dart           # CRUD + import/export for darkroom recipes
     reciprocity_storage.dart      # Film reciprocity presets + custom profile storage
     light_meter_constants.dart    # Photography value lists, EV math, exposure step settings
     locale_settings.dart          # Persists locale preference
   widgets/
     app_drawer.dart               # Navigation drawer for feature pages
+    list_search_bar.dart          # Shared search field + filter chip row
 assets/
   i18n/
     en.json                       # English translations

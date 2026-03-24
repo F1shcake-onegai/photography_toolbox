@@ -20,6 +20,9 @@ dependencies:
   wakelock_plus: ^1.2.8
   flutter_local_notifications: ^19.0.0
   camera: ^0.11.0+2
+  uuid: ^4.5.1
+  archive: ^4.0.9
+  gal: ^2.3.0
 
 dependency_overrides:
   flutter_local_notifications_windows:

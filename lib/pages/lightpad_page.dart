@@ -472,7 +472,7 @@ class _LightpadPageState extends State<LightpadPage> {
             Text(label),
             const Spacer(),
             SizedBox(
-              width: 60,
+              width: 72,
               child: TextField(
                 controller: controller,
                 keyboardType: TextInputType.number,

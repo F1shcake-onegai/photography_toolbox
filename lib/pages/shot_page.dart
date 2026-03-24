@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/film_storage.dart';
+import '../services/import_export_service.dart';
+import 'package:uuid/uuid.dart';
 import '../services/app_localizations.dart';
+import 'image_viewer_page.dart';
 
 class ShotPage extends StatefulWidget {
   final int defaultSequence;
@@ -56,6 +59,35 @@ class _ShotPageState extends State<ShotPage> {
       final xfile = await _picker.pickImage(
           source: source, imageQuality: 85);
       if (xfile == null) return;
+
+      // Check image dimensions (minimum 100x100)
+      final bytes = await File(xfile.path).readAsBytes();
+      final dims = ImportExportService.parseImageDimensions(Uint8List.fromList(bytes));
+      if (dims != null) {
+        final (w, h) = dims;
+        if (w < ImportExportService.minImageDimension ||
+            h < ImportExportService.minImageDimension) {
+          if (mounted) {
+            final l = AppLocalizations.of(context);
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text(l.t('shot_image_too_small_title')),
+                content: Text(l.t('shot_image_too_small_message',
+                    {'size': '${w}x$h'})),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          }
+          return;
+        }
+      }
+
       final imgDir = await FilmStorage.imageDir();
       final saved = await File(xfile.path).copy(
           '$imgDir/${DateTime.now().millisecondsSinceEpoch}.jpg');
@@ -79,10 +111,26 @@ class _ShotPageState extends State<ShotPage> {
 
   Future<void> _pickFromGallery() => _pickImage(ImageSource.gallery);
 
+  void _viewImage(BuildContext context) {
+    if (_imagePath == null) return;
+    final seq = int.tryParse(_seqCtrl.text) ?? widget.defaultSequence;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ImageViewerPage(
+          imagePath: _imagePath!,
+          rollName: '',
+          sequence: seq,
+        ),
+      ),
+    );
+  }
+
   void _save() {
     final seq = int.tryParse(_seqCtrl.text) ??
         widget.defaultSequence;
     final shot = <String, dynamic>{
+      'uuid': widget.existingShot?['uuid'] ?? const Uuid().v4(),
       'sequence': seq,
       'imagePath': _imagePath ?? '',
       'comment': _commentCtrl.text,
@@ -133,31 +181,34 @@ class _ShotPageState extends State<ShotPage> {
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant)),
             const SizedBox(height: 6),
-            Container(
-              height: 240,
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: colorScheme.outlineVariant),
-              ),
-              child: hasImage
-                  ? ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(12),
-                      child: Image.file(
-                        File(_imagePath!),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
+            GestureDetector(
+              onTap: hasImage ? () => _viewImage(context) : null,
+              child: Container(
+                height: 240,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: colorScheme.outlineVariant),
+                ),
+                child: hasImage
+                    ? ClipRRect(
+                        borderRadius:
+                            BorderRadius.circular(12),
+                        child: Image.file(
+                          File(_imagePath!),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        ),
+                      )
+                    : Center(
+                        child: Icon(
+                            Icons.photo_outlined,
+                            size: 64,
+                            color: colorScheme
+                                .onSurfaceVariant),
                       ),
-                    )
-                  : Center(
-                      child: Icon(
-                          Icons.photo_outlined,
-                          size: 64,
-                          color: colorScheme
-                              .onSurfaceVariant),
-                    ),
+              ),
             ),
             const SizedBox(height: 12),
             Row(

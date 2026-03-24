@@ -50,6 +50,9 @@ A `GestureDetector` in `MaterialApp.builder` dismisses the keyboard on tap outsi
 - `RecipeStorage` — CRUD for darkroom recipes stored as `recipes.json` in app documents directory. Also handles JSON import/export for recipe sharing.
 - `ReciprocityStorage` — CRUD for custom reciprocity film profiles stored as `reciprocity_profiles.json` in app documents directory. Also contains hardcoded preset data for 20 common films (Ilford, Kodak, Fuji — both negative and slide).
 - `LightMeterConstants` — photography value lists (aperture, shutter, ISO) in full/half/third/quarter stops, EV math functions, and exposure step settings persistence via `ExposureStepSettings`.
+- `ImportExportService` — centralized import/export for recipes (`.ptrecipe` JSON) and rolls (`.ptroll` ZIP archive with `roll.json` + `images/`). Handles file parsing, type detection, image dimension validation, and preview summaries. Both `RecipeStorage` and `FilmStorage` delegate export/import to this service.
+- `FileIntentService` — platform channel bridge (`photography_toolbox/file_intent`) for handling OS "Open with…" file associations. Cold start uses `MethodChannel.getInitialFile`; warm start uses `EventChannel` stream. Native code (Kotlin/Swift) copies content:// or security-scoped URLs to temp cache files. Pages check `FileIntentService.pendingFilePath` after loading to auto-trigger import.
+- `ImportSettings` — persists default duplicate import action (`ask`/`replace`/`skip`/`duplicate`) in SharedPreferences.
 - `LocaleSettings` — persists locale preference (`null` = follow system).
 
 ### Darkroom Timer
@@ -57,11 +60,24 @@ A `GestureDetector` in `MaterialApp.builder` dismisses the keyboard on tap outsi
 Three-page feature: recipe list → recipe editor → running timer.
 
 **Recipe data model** (`recipes.json`):
+- `id` — UUID v4 string
+- `createdAt` — milliseconds since epoch
 - `filmStock`, `developer`, `dilution` — recipe identity fields
+- `processType` — `'bw_neg'`|`'bw_pos'`|`'color_neg'`|`'color_pos'` (user-selected, defaults to `bw_neg`)
+- `notes` — free-text notes field
 - `baseTemp` — `null` (N/A for color films), `20.0`, or `24.0`; drives Arrhenius temperature compensation on develop/custom steps
 - `redSafelight` — boolean; auto-activates darkroom safelight mode in timer
 - `steps[]` — ordered list, each with `type` (`develop`|`stop`|`fix`|`wash`|`rinse`|`custom`), `time` (seconds), optional `label`, optional `agitation` config, optional `speedWash` (wash only)
 - `agitation` — `{ method: 'hand'|'rolling', initialDuration, period, duration, speed }`
+
+**Built-in recipes**: C-41 (color negative) and E-6 (color positive) are seeded on first launch via `RecipeStorage._builtInRecipes()` when `recipes.json` doesn't exist. Users can duplicate and modify them.
+
+**Recipe list** (`darkroom_timer_page.dart`):
+- Search/sort/filter via `ListSearchBar` widget
+- Auto-tags derived at runtime: process type, developer, film stock, dilution
+- Sort options: Film Stock (A-Z), Date Created (newest), Developer (A-Z)
+- Recipe cards show edit, duplicate, and share action buttons
+- Import button accepts `.ptrecipe`/`.json` files with preview confirmation and duplicate handling
 
 **Timer page** (`timer_running_page.dart`):
 - Apple Clock-style rolling step list with `AnimatedSwitcher` slide-up transitions
@@ -75,6 +91,33 @@ Three-page feature: recipe list → recipe editor → running timer.
 **Windows build note**: `flutter_local_notifications` Windows plugin requires ATL headers not available on this system. A no-op Dart stub (`windows_notifications_stub/`) overrides the Windows plugin via `dependency_overrides` in `pubspec.yaml`. Notifications are silently skipped on Windows; they work on Android/iOS.
 
 **Bundled fonts**: Noto Sans (Latin), Noto Sans JP, Noto Sans SC in `assets/fonts/` with `fontFamilyFallback` in theme for CJK coverage.
+
+### Film Quick Note
+
+Roll list → roll detail → shot editor / image viewer.
+
+**Roll data model** (`film_rolls.json`):
+- `id` — UUID v4 string (legacy timestamp IDs auto-migrated)
+- `createdAt` — milliseconds since epoch
+- `brand`, `model`, `sensitivity` — roll identity fields
+- `comments` — free-text notes (auto-saved with 500ms debounce)
+- `shots[]` — ordered by sequence number then createdAt timestamp; each shot has `uuid`, `sequence`, `imagePath`, `comment`, `createdAt`
+
+**Roll list** (`film_quick_note_page.dart`):
+- Search/sort/filter via `ListSearchBar` widget
+- Auto-tags derived at runtime: brand, ISO
+- Sort options: Name (A-Z), Date Created (newest), ISO (ascending)
+- Import button accepts `.ptroll`/`.json`/`.zip` files with small-image warnings, preview confirmation, and duplicate handling
+
+**Roll detail** (`roll_detail_page.dart`):
+- 3-column shot grid; tap image → image viewer, tap empty → shot editor, long press → editor
+- Share button with shot selection dialog (select all/none, shot count display)
+- Export as `.ptroll` ZIP archive via `share_plus`
+
+**Image viewer** (`image_viewer_page.dart`):
+- Full-screen with `InteractiveViewer` (1x–5x zoom, pan)
+- "Save to Gallery" button on mobile via `gal` package; hidden on desktop
+- Black background, transparent AppBar
 
 ### Light Meter
 
@@ -99,13 +142,31 @@ Single-page calculator (`reciprocity_calculator_page.dart`) following the flash/
 - Metered time: discrete slider (0.5s–960s) + exact text field override
 - Results: corrected time (formatted as hours/min/sec) + extra stops
 
+### Search, Sort & Filter
+
+Both recipe and roll list pages share the same pattern via `ListSearchBar` widget:
+- AppBar has search toggle icon and sort `PopupMenuButton`
+- `ListSearchBar` renders a search `TextField` + horizontal `FilterChip` row
+- Tags are auto-derived at runtime from item fields (not stored); generated by static `_generateTags()` methods per page
+- Filter chips use `Set<String>` of `"category:value"` keys with AND logic (item must match all active filters)
+- `_applyFilters()` chains: text search → chip filters → sort → `setState`
+- Available filters are built from ALL items (not the filtered subset)
+- "No results" empty state when filters yield nothing but items exist
+
+### Import / Export
+
+- **Recipes**: exported as `.ptrecipe` (pretty-printed JSON with `_type: "recipe"`, UUID preserved for duplicate detection)
+- **Rolls**: exported as `.ptroll` (ZIP archive containing `roll.json` + `images/` directory with shot photos)
+- Import flow: file picker / file intent → parse & validate → small-image warning (rolls) → preview confirmation dialog → duplicate handling (`ask`/`replace`/`skip`/`duplicate`) → import → snackbar feedback
+- `ImportExportService.parseImportFile()` detects type from extension or content; validates required fields; extracts images to temp directory; checks image dimensions (min 100x100)
+- File associations: `.ptrecipe` and `.ptroll` registered with Android (intent filters) and iOS (UTExportedTypeDeclarations + CFBundleDocumentTypes); native code copies to cache; `FileIntentService` passes path to Dart; target page auto-triggers import on load
+
 ### Key Patterns
 
 - All feature pages use `AppDrawer` for navigation and have a back button that does `pushReplacementNamed(context, '/')`.
 - Aperture sliders use index-based discrete sliders over the `ApertureSettings.stopsFrom()` list.
 - Distance sliders use logarithmic scale (`log10` / `pow(10, v)`).
-- Film rolls use millisecond timestamp as string ID.
-- Recipes use millisecond timestamp as string ID.
+- Film rolls and recipes use UUID v4 as string ID (legacy timestamp IDs auto-migrated on load).
 - Lightpad fullscreen exit uses a 2-second long-press with animated ring progress (`_RingPainter`).
 - Calculator result areas are pinned to the bottom of the screen with structured cards (small label + large bold value) in `surfaceContainerHighest` container with rounded top corners.
 - Camera button in shot page is only shown on mobile (iOS/Android); desktop uses file picker only.

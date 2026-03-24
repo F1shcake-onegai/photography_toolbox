@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'services/app_localizations.dart';
+import 'services/file_intent_service.dart';
+import 'services/import_export_service.dart';
 import 'services/locale_settings.dart';
 import 'pages/home_page.dart';
 import 'pages/flash_calculator_page.dart';
@@ -42,6 +45,8 @@ class PhotographyToolboxApp extends StatefulWidget {
 
 class _PhotographyToolboxAppState extends State<PhotographyToolboxApp> {
   Locale? _locale;
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  StreamSubscription<String>? _fileSub;
 
   @override
   void initState() {
@@ -49,6 +54,47 @@ class _PhotographyToolboxAppState extends State<PhotographyToolboxApp> {
     if (widget.initialLocale != null) {
       _locale = Locale(widget.initialLocale!);
     }
+    _initFileHandler();
+  }
+
+  Future<void> _initFileHandler() async {
+    await FileIntentService.init();
+    _fileSub = FileIntentService.incomingFiles.listen(_handleIncomingFile);
+  }
+
+  void _handleIncomingFile(String filePath) {
+    final lower = filePath.toLowerCase();
+    if (lower.endsWith('.ptrecipe')) {
+      _routeToImport(filePath, '/darkroom_timer');
+    } else if (lower.endsWith('.ptroll') || lower.endsWith('.zip')) {
+      _routeToImport(filePath, '/film_quick_note');
+    } else if (lower.endsWith('.json')) {
+      _routeJsonFile(filePath);
+    }
+  }
+
+  Future<void> _routeJsonFile(String filePath) async {
+    try {
+      final parsed = await ImportExportService.parseImportFile(filePath);
+      final route = parsed.type == ExportFileType.recipe
+          ? '/darkroom_timer'
+          : '/film_quick_note';
+      _routeToImport(filePath, route);
+    } catch (_) {
+      // Not a valid import file — ignore
+    }
+  }
+
+  void _routeToImport(String filePath, String route) {
+    FileIntentService.pendingFilePath = filePath;
+    _navigatorKey.currentState
+        ?.pushNamedAndRemoveUntil(route, (r) => r.isFirst);
+  }
+
+  @override
+  void dispose() {
+    _fileSub?.cancel();
+    super.dispose();
   }
 
   void _setLocale(String? localeCode) {
@@ -60,6 +106,7 @@ class _PhotographyToolboxAppState extends State<PhotographyToolboxApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'Photography Toolbox',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

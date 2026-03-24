@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/app_localizations.dart';
+import '../services/recipe_storage.dart';
 
 class RecipeEditPage extends StatefulWidget {
   final Map<String, dynamic>? existingRecipe;
@@ -16,6 +17,8 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
   late TextEditingController _developerCtrl;
   late TextEditingController _dilutionCtrl;
   double? _baseTemp = 20.0; // null = N/A (no temp compensation)
+  String _processType = 'bw_neg';
+  late TextEditingController _notesCtrl;
   late List<Map<String, dynamic>> _steps;
   bool _redSafelight = false;
 
@@ -31,6 +34,9 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
         text: r?['developer'] as String? ?? '');
     _dilutionCtrl = TextEditingController(
         text: r?['dilution'] as String? ?? '');
+    _notesCtrl = TextEditingController(
+        text: r?['notes'] as String? ?? '');
+    _processType = r?['processType'] as String? ?? 'bw_neg';
     if (r != null && r.containsKey('baseTemp')) {
       _baseTemp = (r['baseTemp'] as num?)?.toDouble();
     }
@@ -49,6 +55,7 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
     _filmStockCtrl.dispose();
     _developerCtrl.dispose();
     _dilutionCtrl.dispose();
+    _notesCtrl.dispose();
     super.dispose();
   }
 
@@ -122,10 +129,14 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
     if (filmStock.isEmpty) return;
     final recipe = <String, dynamic>{
       'id': widget.existingRecipe?['id'] ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
+          RecipeStorage.newUuid(),
+      'createdAt': widget.existingRecipe?['createdAt'] ??
+          DateTime.now().millisecondsSinceEpoch,
       'filmStock': filmStock,
       'developer': _developerCtrl.text.trim(),
       'dilution': _dilutionCtrl.text.trim(),
+      'notes': _notesCtrl.text.trim(),
+      'processType': _processType,
       'baseTemp': _baseTemp,
       'redSafelight': _redSafelight,
       'steps': _steps,
@@ -149,7 +160,7 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          width: 48,
+          width: 64,
           child: TextField(
             controller: minCtrl,
             keyboardType: TextInputType.number,
@@ -168,7 +179,7 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
           child: Text(':', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         SizedBox(
-          width: 48,
+          width: 64,
           child: TextField(
             controller: secCtrl,
             keyboardType: TextInputType.number,
@@ -393,6 +404,42 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
               controller: _dilutionCtrl,
               decoration: InputDecoration(
                 hintText: l.t('recipe_dilution_hint'),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Process type
+            Text(l.t('recipe_process_type'),
+                style: TextStyle(
+                    fontSize: 12, color: colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String>(
+              initialValue: _processType,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              items: [
+                DropdownMenuItem(value: 'bw_neg', child: Text(l.t('process_bw_neg'))),
+                DropdownMenuItem(value: 'bw_pos', child: Text(l.t('process_bw_pos'))),
+                DropdownMenuItem(value: 'color_neg', child: Text(l.t('process_color_neg'))),
+                DropdownMenuItem(value: 'color_pos', child: Text(l.t('process_color_pos'))),
+              ],
+              onChanged: (v) => setState(() => _processType = v ?? 'bw_neg'),
+            ),
+            const SizedBox(height: 16),
+
+            // Notes
+            Text(l.t('recipe_notes'),
+                style: TextStyle(
+                    fontSize: 12, color: colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _notesCtrl,
+              maxLines: 2,
+              decoration: InputDecoration(
+                hintText: l.t('recipe_notes_hint'),
                 border: const OutlineInputBorder(),
               ),
             ),

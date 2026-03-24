@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:uuid/uuid.dart';
 import '../widgets/app_drawer.dart';
 import '../services/app_localizations.dart';
 import '../services/reciprocity_storage.dart';
@@ -570,9 +571,7 @@ class _CustomFilmSheetState extends State<_CustomFilmSheet> {
 
               final profile = <String, dynamic>{
                 'id': existing?['id'] ??
-                    DateTime.now()
-                        .millisecondsSinceEpoch
-                        .toString(),
+                    const Uuid().v4(),
                 'name': name,
                 'brand': '',
                 'exponent': exp,

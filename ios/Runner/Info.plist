@@ -40,6 +40,72 @@
 	<string>This app uses the camera to photograph your film shots.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app accesses your photo library to attach images to film shots.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app saves photos to your photo library when you download shot images.</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Photography Toolbox Recipe</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.example.photographyToolbox.ptrecipe</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Photography Toolbox Roll</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.example.photographyToolbox.ptroll</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.json</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Photography Toolbox Recipe</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.example.photographyToolbox.ptrecipe</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>ptrecipe</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.zip-archive</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Photography Toolbox Roll</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.example.photographyToolbox.ptroll</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>ptroll</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

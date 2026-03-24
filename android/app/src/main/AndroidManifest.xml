@@ -28,6 +28,34 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- File association: .ptrecipe files (file:// URIs) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.ptrecipe"/>
+            </intent-filter>
+            <!-- File association: .ptroll files (file:// URIs) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.ptroll"/>
+            </intent-filter>
+            <!-- File association: .ptrecipe files (content:// URIs) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.ptrecipe"/>
+            </intent-filter>
+            <!-- File association: .ptroll files (content:// URIs) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.ptroll"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

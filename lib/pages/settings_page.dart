@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/app_drawer.dart';
 import '../services/aperture_settings.dart';
 import '../services/app_localizations.dart';
+import '../services/import_settings.dart';
 import '../services/light_meter_constants.dart';
 import '../services/locale_settings.dart';
 import '../main.dart';
@@ -16,6 +17,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   double _selectedMaxAperture = ApertureSettings.defaultMaxAperture;
   ExposureStep _selectedExposureStep = ExposureStepSettings.defaultStep;
+  DuplicateAction _selectedImportAction = ImportSettings.defaultAction;
   String? _selectedLocale;
   bool _loaded = false;
 
@@ -29,10 +31,12 @@ class _SettingsPageState extends State<SettingsPage> {
     final value = await ApertureSettings.load();
     final locale = await LocaleSettings.load();
     final step = await ExposureStepSettings.load();
+    final importAction = await ImportSettings.load();
     setState(() {
       _selectedMaxAperture = value;
       _selectedLocale = locale;
       _selectedExposureStep = step;
+      _selectedImportAction = importAction;
       _loaded = true;
     });
   }
@@ -40,6 +44,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _save() async {
     await ApertureSettings.save(_selectedMaxAperture);
     await ExposureStepSettings.save(_selectedExposureStep);
+    await ImportSettings.save(_selectedImportAction);
     await LocaleSettings.save(_selectedLocale);
     if (mounted) {
       PhotographyToolboxApp.setLocale(context, _selectedLocale);
@@ -49,10 +54,24 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  String _importActionLabel(DuplicateAction action, AppLocalizations l) {
+    switch (action) {
+      case DuplicateAction.ask:
+        return l.t('settings_import_ask');
+      case DuplicateAction.replace:
+        return l.t('settings_import_replace');
+      case DuplicateAction.skip:
+        return l.t('settings_import_skip');
+      case DuplicateAction.duplicate:
+        return l.t('settings_import_duplicate');
+    }
+  }
+
   void _revoke() {
     setState(() {
       _selectedMaxAperture = ApertureSettings.defaultMaxAperture;
       _selectedExposureStep = ExposureStepSettings.defaultStep;
+      _selectedImportAction = ImportSettings.defaultAction;
       _selectedLocale = null;
     });
   }
@@ -175,6 +194,35 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: 8),
                   Text(
                     l.t('settings_exposure_step_desc'),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 24),
+
+                  Text(l.t('settings_import_action'),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<DuplicateAction>(
+                    initialValue: _selectedImportAction,
+                    decoration: const InputDecoration(
+                        border: OutlineInputBorder()),
+                    items: DuplicateAction.values
+                        .map((a) => DropdownMenuItem(
+                            value: a,
+                            child: Text(_importActionLabel(a, l))))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState(() => _selectedImportAction = v);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l.t('settings_import_action_desc'),
                     style: TextStyle(
                         fontSize: 12,
                         color: colorScheme.onSurfaceVariant),
