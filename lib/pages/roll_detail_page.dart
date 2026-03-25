@@ -25,6 +25,7 @@ class _RollDetailPageState extends State<RollDetailPage> {
   bool _deleted = false;
   double _ec = 0.0;
   double _ecStep = 1 / 3;
+  String? _imgDir;
 
   @override
   void initState() {
@@ -35,6 +36,12 @@ class _RollDetailPageState extends State<RollDetailPage> {
     _commentCtrl = TextEditingController();
     _loadRoll();
     _loadEcStep();
+    _loadImgDir();
+  }
+
+  Future<void> _loadImgDir() async {
+    final dir = await FilmStorage.imageDir();
+    if (mounted) setState(() => _imgDir = dir);
   }
 
   Future<void> _loadEcStep() async {
@@ -566,18 +573,25 @@ class _RollDetailPageState extends State<RollDetailPage> {
 
   Widget _shotTile(int index) {
     final shot = _shots[index];
-    final imagePath = shot['imagePath'] as String?;
+    final storedPath = shot['imagePath'] as String? ?? '';
     final seq = shot['sequence'] as int;
     final colorScheme = Theme.of(context).colorScheme;
 
-    final hasImage = imagePath != null &&
-        imagePath.isNotEmpty &&
-        File(imagePath).existsSync();
+    // Resolve relative filename to absolute path
+    String fullPath = storedPath;
+    if (storedPath.isNotEmpty &&
+        !storedPath.contains('/') &&
+        !storedPath.contains('\\') &&
+        _imgDir != null) {
+      fullPath = '$_imgDir/$storedPath';
+    }
+
+    final hasImage = fullPath.isNotEmpty && File(fullPath).existsSync();
 
     Widget imageWidget;
     if (hasImage) {
       imageWidget = Image.file(
-        File(imagePath),
+        File(fullPath),
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,

@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'film_storage.dart';
 
 /// File types recognized by the import/export system.
 enum ExportFileType { recipe, roll }
@@ -90,7 +91,9 @@ class ImportExportService {
     for (final shot in shots) {
       final imagePath = shot['imagePath'] as String?;
       if (imagePath != null && imagePath.isNotEmpty) {
-        final imageFile = File(imagePath);
+        // Resolve relative filename to absolute path
+        final resolvedPath = await FilmStorage.resolveImagePath(imagePath);
+        final imageFile = File(resolvedPath);
         if (imageFile.existsSync()) {
           final fileName = imageFile.uri.pathSegments.last;
           imageFiles[fileName] = imageFile;

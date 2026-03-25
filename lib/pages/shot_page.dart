@@ -27,6 +27,7 @@ class _ShotPageState extends State<ShotPage> {
   late TextEditingController _seqCtrl;
   late TextEditingController _commentCtrl;
   String? _imagePath;
+  String? _resolvedPath;
   final _picker = ImagePicker();
 
   bool get _isEditing => widget.existingShot != null;
@@ -45,6 +46,16 @@ class _ShotPageState extends State<ShotPage> {
         text: widget.existingShot?['comment'] as String? ?? '');
     _imagePath =
         widget.existingShot?['imagePath'] as String?;
+    _resolveImage();
+  }
+
+  Future<void> _resolveImage() async {
+    if (_imagePath == null || _imagePath!.isEmpty) {
+      setState(() => _resolvedPath = null);
+      return;
+    }
+    final resolved = await FilmStorage.resolveImagePath(_imagePath!);
+    if (mounted) setState(() => _resolvedPath = resolved);
   }
 
   @override
@@ -89,9 +100,18 @@ class _ShotPageState extends State<ShotPage> {
       }
 
       final imgDir = await FilmStorage.imageDir();
-      final saved = await File(xfile.path).copy(
-          '$imgDir/${DateTime.now().millisecondsSinceEpoch}.jpg');
-      setState(() => _imagePath = saved.path);
+      final shotUuid = widget.existingShot?['uuid'] ?? const Uuid().v4();
+      // Delete old image if replacing
+      if (_imagePath != null && _imagePath!.isNotEmpty) {
+        final oldPath = await FilmStorage.resolveImagePath(_imagePath!);
+        final oldFile = File(oldPath);
+        if (oldFile.existsSync()) await oldFile.delete();
+      }
+      final fileName = '$shotUuid.jpg';
+      await File(xfile.path).copy('$imgDir/$fileName');
+      _imagePath = fileName;
+      _resolvedPath = '$imgDir/$fileName';
+      setState(() {});
     } catch (e) {
       debugPrint('image_picker error: $e');
       if (mounted) {
@@ -112,13 +132,13 @@ class _ShotPageState extends State<ShotPage> {
   Future<void> _pickFromGallery() => _pickImage(ImageSource.gallery);
 
   void _viewImage(BuildContext context) {
-    if (_imagePath == null) return;
+    if (_resolvedPath == null) return;
     final seq = int.tryParse(_seqCtrl.text) ?? widget.defaultSequence;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => ImageViewerPage(
-          imagePath: _imagePath!,
+          imagePath: _resolvedPath!,
           rollName: '',
           sequence: seq,
         ),
@@ -144,9 +164,9 @@ class _ShotPageState extends State<ShotPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final l = AppLocalizations.of(context);
-    final hasImage = _imagePath != null &&
-        _imagePath!.isNotEmpty &&
-        File(_imagePath!).existsSync();
+    final hasImage = _resolvedPath != null &&
+        _resolvedPath!.isNotEmpty &&
+        File(_resolvedPath!).existsSync();
 
     return Scaffold(
       appBar: AppBar(
@@ -196,7 +216,7 @@ class _ShotPageState extends State<ShotPage> {
                         borderRadius:
                             BorderRadius.circular(12),
                         child: Image.file(
-                          File(_imagePath!),
+                          File(_resolvedPath!),
                           fit: BoxFit.cover,
                           width: double.infinity,
                         ),

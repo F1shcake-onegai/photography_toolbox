@@ -23,7 +23,9 @@ class FilmStorage {
       final json = await file.readAsString();
       final list = jsonDecode(json) as List;
       final rolls = list.cast<Map<String, dynamic>>();
-      if (_migrateUuids(rolls)) {
+      bool changed = _migrateUuids(rolls);
+      changed = _migrateImagePaths(rolls) || changed;
+      if (changed) {
         await _file().then((f) => f.writeAsString(jsonEncode(rolls)));
       }
       return rolls;
@@ -53,6 +55,23 @@ class FilmStorage {
             shot['uuid'] = _uuid.v4();
             changed = true;
           }
+        }
+      }
+    }
+    return changed;
+  }
+
+  /// Strip absolute image paths to just filenames.
+  static bool _migrateImagePaths(List<Map<String, dynamic>> rolls) {
+    bool changed = false;
+    for (final roll in rolls) {
+      final shots = roll['shots'] as List?;
+      if (shots == null) continue;
+      for (final shot in shots.cast<Map<String, dynamic>>()) {
+        final path = shot['imagePath'] as String? ?? '';
+        if (path.isNotEmpty && (path.contains('/') || path.contains('\\'))) {
+          shot['imagePath'] = Uri.file(path).pathSegments.last;
+          changed = true;
         }
       }
     }
@@ -105,6 +124,15 @@ class FilmStorage {
     return imgDir.path;
   }
 
+  /// Resolve a stored image filename to its full absolute path.
+  static Future<String> resolveImagePath(String stored) async {
+    if (stored.isEmpty) return '';
+    // Already absolute (legacy) — return as-is
+    if (stored.contains('/') || stored.contains('\\')) return stored;
+    final dir = await imageDir();
+    return '$dir/$stored';
+  }
+
   /// Export a roll to a .ptroll file. Returns the file path.
   static Future<String> exportRoll(
     Map<String, dynamic> roll, {
@@ -151,10 +179,11 @@ class FilmStorage {
 
       final tempPath = images[archivePath];
       if (tempPath != null && File(tempPath).existsSync()) {
-        final destPath =
-            '$imgDirPath/${DateTime.now().millisecondsSinceEpoch}_$fileName';
-        await File(tempPath).copy(destPath);
-        shot['imagePath'] = destPath;
+        final shotUuid = shot['uuid'] as String? ?? _uuid.v4();
+        shot['uuid'] ??= shotUuid;
+        final destName = '$shotUuid.jpg';
+        await File(tempPath).copy('$imgDirPath/$destName');
+        shot['imagePath'] = destName;
       } else {
         shot['imagePath'] = '';
       }
