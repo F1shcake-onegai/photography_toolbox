@@ -84,7 +84,7 @@
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>com.example.photographyToolbox.ptrecipe</string>
+				<string>com.muxianli.photographytoolbox.ptrecipe</string>
 			</array>
 		</dict>
 		<dict>
@@ -96,7 +96,7 @@
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>com.example.photographyToolbox.ptroll</string>
+				<string>com.muxianli.photographytoolbox.ptroll</string>
 			</array>
 		</dict>
 	</array>
@@ -110,7 +110,7 @@
 			<key>UTTypeDescription</key>
 			<string>Photography Toolbox Recipe</string>
 			<key>UTTypeIdentifier</key>
-			<string>com.example.photographyToolbox.ptrecipe</string>
+			<string>com.muxianli.photographytoolbox.ptrecipe</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
@@ -127,7 +127,7 @@
 			<key>UTTypeDescription</key>
 			<string>Photography Toolbox Roll</string>
 			<key>UTTypeIdentifier</key>
-			<string>com.example.photographyToolbox.ptroll</string>
+			<string>com.muxianli.photographytoolbox.ptroll</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
