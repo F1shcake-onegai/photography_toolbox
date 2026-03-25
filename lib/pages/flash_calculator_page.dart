@@ -242,9 +242,10 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
                           divisions: _apertureStops.length - 1,
                           label:
                               'f/${_apertureStops[_apertureIndex]}',
-                          onChanged: (v) => setState(() {
-                            _apertureIndex = v.round();
-                          }),
+                          onChanged: (v) {
+                            setState(() => _apertureIndex = v.round());
+                            _compute();
+                          },
                         ),
                       ),
                     ],
@@ -293,10 +294,10 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
                           max: math.log(50.0) / math.ln10,
                           divisions: 100,
                           label: _formatDistance(_distance),
-                          onChanged: !_calculatePower ? null : (v) => setState(() {
-                            _distance =
-                                math.pow(10, v).toDouble();
-                          }),
+                          onChanged: !_calculatePower ? null : (v) {
+                            setState(() => _distance = math.pow(10, v).toDouble());
+                            _compute();
+                          },
                         ),
                       ),
                     ],
@@ -345,9 +346,10 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
                           max: (_powerKeys.length - 1).toDouble(),
                           divisions: _powerKeys.length - 1,
                           label: _powerKeys[_powerIndex],
-                          onChanged: _calculatePower ? null : (v) => setState(() {
-                            _powerIndex = v.round();
-                          }),
+                          onChanged: _calculatePower ? null : (v) {
+                            setState(() => _powerIndex = v.round());
+                            _compute();
+                          },
                         ),
                       ),
                     ],
@@ -377,11 +379,6 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
                       hint: l.t('flash_iso_hint')),
                   const SizedBox(height: 16),
 
-                  ElevatedButton.icon(
-                    onPressed: _compute,
-                    icon: const Icon(Icons.calculate),
-                    label: Text(l.t('flash_compute')),
-                  ),
                 ],
               ),
             ),
@@ -462,15 +459,20 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
                     .colorScheme
                     .onSurfaceVariant)),
         const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(
-              decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-          decoration: InputDecoration(
-              hintText: hint,
-              border: const OutlineInputBorder()),
-          onChanged: (_) => setState(() {}),
+        Focus(
+          onFocusChange: (hasFocus) {
+            if (!hasFocus) _compute();
+          },
+          child: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(
+                decimal: true),
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+            decoration: InputDecoration(
+                hintText: hint,
+                border: const OutlineInputBorder()),
+            onChanged: (_) => setState(() {}),
+          ),
         ),
       ],
     );

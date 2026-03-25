@@ -23,15 +23,19 @@ class FileIntentService {
     _initialized = true;
 
     // Listen for files arriving while the app is running (warm start)
-    try {
+    // The EventChannel listen call throws MissingPluginException on
+    // platforms without native implementation (Windows/desktop).
+    // The exception is async, so a sync try-catch around listen() won't
+    // catch it. Use runZonedGuarded to swallow it safely.
+    runZonedGuarded(() {
       _eventChannel.receiveBroadcastStream().listen((event) {
         if (event is String && event.isNotEmpty) {
           _controller.add(event);
         }
       }, onError: (_) {});
-    } catch (_) {
+    }, (_, _) {
       // Platform channel not available (e.g., desktop)
-    }
+    });
 
     // Check for initial file from cold start
     try {

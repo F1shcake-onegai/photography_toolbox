@@ -222,10 +222,13 @@ class _ReciprocityCalculatorPageState
                           divisions: _meteredTimes.length - 1,
                           label: _formatSliderTime(
                               _meteredTimes[_meteredTimeIndex]),
-                          onChanged: (v) => setState(() {
-                            _meteredTimeIndex = v.round();
-                            _exactTimeCtrl.clear();
-                          }),
+                          onChanged: (v) {
+                            setState(() {
+                              _meteredTimeIndex = v.round();
+                              _exactTimeCtrl.clear();
+                            });
+                            _compute();
+                          },
                         ),
                       ),
                     ],
@@ -259,25 +262,23 @@ class _ReciprocityCalculatorPageState
                           fontSize: 12,
                           color: colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 6),
-                  TextField(
-                    controller: _exactTimeCtrl,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(
-                            decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-                    decoration: InputDecoration(
-                      hintText: _formatSliderTime(
-                          _meteredTimes[_meteredTimeIndex]),
-                      border: const OutlineInputBorder(),
+                  Focus(
+                    onFocusChange: (hasFocus) {
+                      if (!hasFocus) _compute();
+                    },
+                    child: TextField(
+                      controller: _exactTimeCtrl,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(
+                              decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                      decoration: InputDecoration(
+                        hintText: _formatSliderTime(
+                            _meteredTimes[_meteredTimeIndex]),
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: (_) => setState(() {}),
                     ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 20),
-
-                  ElevatedButton.icon(
-                    onPressed: _compute,
-                    icon: const Icon(Icons.calculate),
-                    label: Text(l.t('reciprocity_compute')),
                   ),
                 ],
               ),

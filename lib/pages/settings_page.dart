@@ -102,28 +102,59 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   InkWell(
                     borderRadius: BorderRadius.circular(8),
-                    onTap: () => showAboutDialog(
+                    onTap: () => showDialog(
                       context: context,
-                      applicationName: 'Photography Toolbox',
-                      applicationVersion: '1.3.0 (Build Mar 25, 2026)',
-                      applicationLegalese: '\u00a9 2026 @f1shcake_onegai\nLicensed under CC0 1.0 Universal',
-                      children: [
-                        const SizedBox(height: 12),
-                        Text(l.t('app_about_description')),
-                        const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: () => launchUrl(Uri.parse(
-                              'https://github.com/F1shcake-onegai/photography_toolbox')),
-                          child: const Text(
-                            'github.com/F1shcake-onegai/photography_toolbox',
-                            style: TextStyle(
-                                color: Colors.blue,
-                                decoration: TextDecoration.underline),
-                          ),
+                      builder: (context) => AlertDialog(
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            Text('Photography Toolbox',
+                                style: Theme.of(context).textTheme.headlineSmall),
+                            const SizedBox(height: 4),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 16.0),
+                              child: Text('1.3.1 (Build Mar 25, 2026)',
+                                  style: Theme.of(context).textTheme.bodyMedium),
+                            ),
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 16.0),
+                              child: Text('2026 @f1shcake_onegai\nLicensed under CC0 1.0 Universal',
+                                  style: Theme.of(context).textTheme.bodySmall),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(l.t('app_about_description')),
+                            const SizedBox(height: 12),
+                            GestureDetector(
+                              onTap: () => launchUrl(Uri.parse(
+                                  'https://github.com/F1shcake-onegai/photography_toolbox')),
+                              child: const Text(
+                                'github.com/F1shcake-onegai/photography_toolbox',
+                                style: TextStyle(
+                                    color: Colors.blue,
+                                    decoration: TextDecoration.underline),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(l.t('app_about_author')),
-                      ],
+                        actions: [
+                          TextButton(
+                            onPressed: () => showLicensePage(
+                              context: context,
+                              applicationName: 'Photography Toolbox',
+                              applicationVersion: '1.3.1 (Build Mar 25, 2026)',
+                              applicationLegalese: '2026 @f1shcake_onegai',
+                            ),
+                            child: Text(MaterialLocalizations.of(context).viewLicensesButtonLabel),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+                          ),
+                        ],
+                      ),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -139,7 +170,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                         .titleMedium
                                         ?.copyWith(fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 2),
-                                Text('1.3.0 (Build Mar 25, 2026)',
+                                Text('1.3.1 (Build Mar 25, 2026)',
                                     style: TextStyle(
                                         fontSize: 12,
                                         color: colorScheme.onSurfaceVariant)),

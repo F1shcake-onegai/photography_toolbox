@@ -140,15 +140,35 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
     );
   }
 
-  Map<String, dynamic>? _buildRecipe() {
-    final filmStock = _filmStockCtrl.text.trim();
-    if (filmStock.isEmpty) return null;
+  List<String> _validate(AppLocalizations l) {
+    final errors = <String>[];
+    if (_filmStockCtrl.text.trim().isEmpty) {
+      errors.add(l.t('recipe_valid_film_stock'));
+    }
+    if (_developerCtrl.text.trim().isEmpty) {
+      errors.add(l.t('recipe_valid_developer'));
+    }
+    if (_dilutionCtrl.text.trim().isEmpty) {
+      errors.add(l.t('recipe_valid_dilution'));
+    }
+    if (_steps.isEmpty) {
+      errors.add(l.t('recipe_valid_steps'));
+    }
+    final totalTime = _steps.fold<int>(
+        0, (sum, s) => sum + ((s['time'] as int?) ?? 0));
+    if (_steps.isNotEmpty && totalTime <= 0) {
+      errors.add(l.t('recipe_valid_time'));
+    }
+    return errors;
+  }
+
+  Map<String, dynamic> _buildRecipe() {
     return <String, dynamic>{
       'id': widget.existingRecipe?['id'] ??
           RecipeStorage.newUuid(),
       'createdAt': widget.existingRecipe?['createdAt'] ??
           DateTime.now().millisecondsSinceEpoch,
-      'filmStock': filmStock,
+      'filmStock': _filmStockCtrl.text.trim(),
       'developer': _developerCtrl.text.trim(),
       'dilution': _dilutionCtrl.text.trim(),
       'notes': _notesCtrl.text.trim(),
@@ -159,8 +179,80 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
     };
   }
 
+  void _showValidationErrors(List<String> errors) {
+    final l = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.t('recipe_valid_title')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: errors
+              .map((e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('\u2022 ', style: TextStyle(fontSize: 14)),
+                        Expanded(child: Text(e)),
+                      ],
+                    ),
+                  ))
+              .toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l.t('recipe_valid_ok')),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _autoSaveAndPop() {
+    final l = AppLocalizations.of(context);
+    final errors = _validate(l);
+    if (errors.isNotEmpty) {
+      _showValidationErrors(errors);
+      return;
+    }
     Navigator.pop(context, _buildRecipe());
+  }
+
+  void _saveNewAndPop() {
+    final l = AppLocalizations.of(context);
+    final errors = _validate(l);
+    if (errors.isNotEmpty) {
+      _showValidationErrors(errors);
+      return;
+    }
+    Navigator.pop(context, _buildRecipe());
+  }
+
+  Future<void> _confirmDiscardAndPop() async {
+    final l = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.t('recipe_discard_title')),
+        content: Text(l.t('recipe_discard_message')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.t('recipe_cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.t('recipe_discard')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _deleteRecipe() async {
@@ -391,13 +483,18 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _autoSaveAndPop();
+        if (didPop) return;
+        if (_isEditing) {
+          _autoSaveAndPop();
+        } else {
+          _confirmDiscardAndPop();
+        }
       },
       child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: _autoSaveAndPop,
+          onPressed: _isEditing ? _autoSaveAndPop : _confirmDiscardAndPop,
         ),
         title: Text(_isEditing
             ? l.t('recipe_edit_title')
@@ -407,6 +504,11 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
             IconButton(
               icon: Icon(Icons.delete_outline, color: colorScheme.error),
               onPressed: _deleteRecipe,
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.check),
+              onPressed: _filmStockCtrl.text.trim().isNotEmpty ? _saveNewAndPop : null,
             ),
         ],
       ),

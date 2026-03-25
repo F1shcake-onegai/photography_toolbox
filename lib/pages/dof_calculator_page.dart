@@ -187,9 +187,10 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
                           divisions: _apertureStops.length - 1,
                           label:
                               'f/${_apertureStops[_apertureIndex]}',
-                          onChanged: (v) => setState(() {
-                            _apertureIndex = v.round();
-                          }),
+                          onChanged: (v) {
+                            setState(() => _apertureIndex = v.round());
+                            _compute();
+                          },
                         ),
                       ),
                     ],
@@ -242,10 +243,10 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
                           divisions: 100,
                           label:
                               _formatDistance(_subjectDistance),
-                          onChanged: (v) => setState(() {
-                            _subjectDistance =
-                                math.pow(10, v).toDouble();
-                          }),
+                          onChanged: (v) {
+                            setState(() => _subjectDistance = math.pow(10, v).toDouble());
+                            _compute();
+                          },
                         ),
                       ),
                     ],
@@ -278,11 +279,6 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
 
                   const SizedBox(height: 16),
 
-                  ElevatedButton.icon(
-                    onPressed: _compute,
-                    icon: const Icon(Icons.calculate),
-                    label: Text(l.t('dof_compute')),
-                  ),
                 ],
               ),
             ),
@@ -385,15 +381,20 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
                     .colorScheme
                     .onSurfaceVariant)),
         const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(
-              decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-          decoration: InputDecoration(
-              hintText: hint,
-              border: const OutlineInputBorder()),
-          onChanged: (_) => setState(() {}),
+        Focus(
+          onFocusChange: (hasFocus) {
+            if (!hasFocus) _compute();
+          },
+          child: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(
+                decimal: true),
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+            decoration: InputDecoration(
+                hintText: hint,
+                border: const OutlineInputBorder()),
+            onChanged: (_) => setState(() {}),
+          ),
         ),
       ],
     );

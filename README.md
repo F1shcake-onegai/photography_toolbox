@@ -4,13 +4,13 @@ A companion app for analog photography, built with Flutter. Works on Android, iO
 
 ## Features
 
-### Flash Calculator
-Calculate flash power or subject distance using guide number, ISO, and aperture. Supports standard flash power steps (1/1 to 1/64) and common f-stop values. Results display at the bottom with structured cards showing required power and suggested setting.
+### Flash Power
+Calculate flash power or subject distance using guide number, ISO, and aperture. Supports standard flash power steps (1/1 to 1/64) and common f-stop values. Results update automatically as you adjust sliders or finish typing in input fields.
 
 ### Depth of Field Calculator
 Compute hyperfocal distance and depth of field range from focal length, aperture, subject distance, and circle of confusion. Results show hyperfocal distance and near–far range at the bottom of the screen.
 
-### Film Quick Note
+### Quick Note
 Log your film rolls and individual shots. Each roll stores brand, model, ISO, comments, and a list of shots. Shots can include a sequence number, photo (camera on mobile, file picker on desktop), and notes. Tap a shot image to open a full-screen viewer with pinch-to-zoom and save-to-gallery. Search, sort, and filter your rolls by brand and ISO. Share rolls as `.ptroll` files with selectable shots, and import rolls received from others. Data is saved locally as JSON.
 
 ### Lightpad
@@ -25,8 +25,11 @@ Camera-based light meter that reads live EV from your scene. Choose between cent
 ### Darkroom Timer
 Create and manage darkroom development recipes with multi-step timers. Each recipe includes film stock, developer, dilution, process type (B&W/color negative/positive), temperature compensation, notes, and agitation settings. Built-in C-41 and E-6 recipes are included out of the box. Search, sort, and filter recipes by film stock, developer, process type, and dilution. Duplicate recipes to create variations. Share recipes as `.ptrecipe` files and import recipes from others. The running timer features an Apple Clock-style rolling step list, push notifications, haptic feedback, and a full darkroom safelight mode with red-tinted UI.
 
+### Chemical Mixer
+Dilution calculator for darkroom chemicals. Supports additive (A+B) and ratio (A:B) notation with up to 4 parts. Enter the total volume and part ratios to see per-part volumes. Also accessible from the running timer page when a recipe has a dilution — opens pre-filled with the recipe's dilution pattern.
+
 ### Settings
-- **Maximum aperture**: Configure the widest aperture stop available across calculators (e.g., f/0.95, f/1.0, f/1.4). Shared by Flash Calculator and Depth of Field Calculator.
+- **Maximum aperture**: Configure the widest aperture stop available across calculators (e.g., f/0.95, f/1.0, f/1.4). Shared by Flash Power and Depth of Field calculators.
 - **Exposure step**: Sets the increment size (1, 1/2, 1/3, 1/4 stops) for the light meter.
 - **Language**: English, Japanese (日本語), Simplified Chinese (简体中文), or follow system locale.
 - **Default import action**: Choose how to handle duplicates when importing recipes or rolls (ask, replace, skip, or import as copy).
@@ -71,9 +74,9 @@ lib/
   main.dart                       # App entry point, routes, locale state, license registration
   pages/
     home_page.dart                # Home screen with feature grid
-    flash_calculator_page.dart    # Flash calculator
+    flash_calculator_page.dart    # Flash power calculator
     dof_calculator_page.dart      # Depth of field calculator
-    film_quick_note_page.dart     # Film roll list with search/sort/filter
+    film_quick_note_page.dart     # Quick note roll list with search/sort/filter
     roll_detail_page.dart         # Single roll view with shots grid and sharing
     shot_page.dart                # Add/edit a shot
     image_viewer_page.dart        # Full-screen image viewer with pinch-to-zoom
@@ -83,6 +86,7 @@ lib/
     darkroom_timer_page.dart      # Recipe list with search/sort/filter
     recipe_edit_page.dart         # Create/edit darkroom recipes
     timer_running_page.dart       # Active countdown timer with step progression
+    chemical_mixer_page.dart      # Chemical dilution mixer
     settings_page.dart            # App settings
   services/
     aperture_settings.dart        # Shared aperture stop configuration
