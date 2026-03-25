@@ -63,21 +63,27 @@ Three-page feature: recipe list → recipe editor → running timer.
 - `id` — UUID v4 string
 - `createdAt` — milliseconds since epoch
 - `filmStock`, `developer`, `dilution` — recipe identity fields
-- `processType` — `'bw_neg'`|`'bw_pos'`|`'color_neg'`|`'color_pos'` (user-selected, defaults to `bw_neg`)
+- `processType` — `'bw_neg'`|`'bw_pos'`|`'color_neg'`|`'color_pos'`|`'paper'` (user-selected, defaults to `bw_neg`)
 - `notes` — free-text notes field
 - `baseTemp` — `null` (N/A for color films), `20.0`, or `24.0`; drives Arrhenius temperature compensation on develop/custom steps
 - `redSafelight` — boolean; auto-activates darkroom safelight mode in timer
 - `steps[]` — ordered list, each with `type` (`develop`|`stop`|`fix`|`wash`|`rinse`|`custom`), `time` (seconds), optional `label`, optional `agitation` config, optional `speedWash` (wash only)
 - `agitation` — `{ method: 'hand'|'rolling', initialDuration, period, duration, speed }`
 
-**Built-in recipes**: C-41 (color negative) and E-6 (color positive) are seeded on first launch via `RecipeStorage._builtInRecipes()` when `recipes.json` doesn't exist. Users can duplicate and modify them.
+**Built-in recipes**: Color Negative (C-41) and Color Reversal (E-6) are seeded on first launch via `RecipeStorage._builtInRecipes()` when `recipes.json` doesn't exist. Users can duplicate and modify them.
 
 **Recipe list** (`darkroom_timer_page.dart`):
 - Search/sort/filter via `ListSearchBar` widget
-- Auto-tags derived at runtime: process type, developer, film stock, dilution
+- Auto-tags derived at runtime (internal — used for filtering only, not displayed on cards): process type, developer, film stock, dilution
 - Sort options: Film Stock (A-Z), Date Created (newest), Developer (A-Z)
-- Recipe cards show edit, duplicate, and share action buttons
+- Recipe cards show edit, duplicate, and share action buttons; duplicate requires confirmation dialog
 - Import button accepts `.ptrecipe`/`.json` files with preview confirmation and duplicate handling
+
+**Recipe editor** (`recipe_edit_page.dart`):
+- Auto-saves on back navigation (no confirm button) via `PopScope`
+- Red delete icon in AppBar (only when editing existing recipe)
+- Step reordering with up/down arrow buttons
+- Process types: B&W Negative, B&W Reversal, Color Negative, Color Reversal, Paper
 
 **Timer page** (`timer_running_page.dart`):
 - Apple Clock-style rolling step list with `AnimatedSwitcher` slide-up transitions
@@ -87,6 +93,7 @@ Three-page feature: recipe list → recipe editor → running timer.
 - Push notifications for step completion and agitation starts (`flutter_local_notifications`, skipped on Windows)
 - Safelight mode: full darkroom ColorScheme (deep black + red), auto-activated when recipe allows, tappable toggle
 - `wakelock_plus` keeps screen on during timer
+- Chemical Mixer shortcut in AppBar (beaker icon) when recipe has a dilution — opens mixer pre-filled
 
 **Windows build note**: `flutter_local_notifications` Windows plugin requires ATL headers not available on this system. A no-op Dart stub (`windows_notifications_stub/`) overrides the Windows plugin via `dependency_overrides` in `pubspec.yaml`. Notifications are silently skipped on Windows; they work on Android/iOS.
 
@@ -94,22 +101,26 @@ Three-page feature: recipe list → recipe editor → running timer.
 
 ### Film Quick Note
 
-Roll list → roll detail → shot editor / image viewer.
+Roll list → roll detail → shot editor / image viewer. Displayed as "Quick Note" in the UI.
 
 **Roll data model** (`film_rolls.json`):
 - `id` — UUID v4 string (legacy timestamp IDs auto-migrated)
 - `createdAt` — milliseconds since epoch
 - `brand`, `model`, `sensitivity` — roll identity fields
+- `ec` — exposure compensation (double, 0.0 default)
 - `comments` — free-text notes (auto-saved with 500ms debounce)
 - `shots[]` — ordered by sequence number then createdAt timestamp; each shot has `uuid`, `sequence`, `imagePath`, `comment`, `createdAt`
 
 **Roll list** (`film_quick_note_page.dart`):
 - Search/sort/filter via `ListSearchBar` widget
-- Auto-tags derived at runtime: brand, ISO
+- Auto-tags derived at runtime (internal — used for filtering only, not displayed on cards): brand, model, ISO, exposure compensation (Yes/No)
 - Sort options: Name (A-Z), Date Created (newest), ISO (ascending)
 - Import button accepts `.ptroll`/`.json`/`.zip` files with small-image warnings, preview confirmation, and duplicate handling
 
 **Roll detail** (`roll_detail_page.dart`):
+- Exposure compensation slider (-3 to +3, snaps to exposure step setting) next to ISO input
+- Double-tap EC label to reset to 0
+
 - 3-column shot grid; tap image → image viewer, tap empty → shot editor, long press → editor
 - Share button with shot selection dialog (select all/none, shot count display)
 - Export as `.ptroll` ZIP archive via `share_plus`
@@ -118,6 +129,17 @@ Roll list → roll detail → shot editor / image viewer.
 - Full-screen with `InteractiveViewer` (1x–5x zoom, pan)
 - "Save to Gallery" button on mobile via `gal` package; hidden on desktop
 - Black background, transparent AppBar
+
+### Chemical Mixer
+
+Single-page dilution calculator (`chemical_mixer_page.dart`). Displayed as "Chemical Mixer" on home grid.
+
+- **Notation toggle**: `A + B` (additive — total = sum of parts) vs `A : B` (ratio — last number is total)
+- **Structured numeric inputs**: no symbol typing needed, each part gets its own number field
+- **Multi-part support**: up to 4 parts (Stock/Water default, expandable to Part A/B/C + Water)
+- **Live results**: bottom card updates as user types, showing per-part volumes + total
+- **Recipe integration**: timer running page shows beaker icon in AppBar when recipe has dilution; opens mixer pre-filled by regex-extracting numeric pattern from dilution string (handles mixed text like "B (1+31)")
+- Result card style matches Flash Power / DOF calculators (pinned bottom, `surfaceContainerHighest`)
 
 ### Light Meter
 
@@ -146,11 +168,12 @@ Single-page calculator (`reciprocity_calculator_page.dart`) following the flash/
 
 Both recipe and roll list pages share the same pattern via `ListSearchBar` widget:
 - AppBar has search toggle icon and sort `PopupMenuButton`
-- `ListSearchBar` renders a search `TextField` + horizontal `FilterChip` row
-- Tags are auto-derived at runtime from item fields (not stored); generated by static `_generateTags()` methods per page
-- Filter chips use `Set<String>` of `"category:value"` keys with AND logic (item must match all active filters)
+- `ListSearchBar` renders a search `TextField` + per-field dropdown `FilterField` panels
+- `FilterField` model supports `displayLabels` for translated filter values (e.g., EC Yes/No)
+- Tags are auto-derived at runtime from item fields (not stored); internal only (not displayed on cards)
+- Cascading filter visibility: `_itemsExcludingCategory()` filters by all active filters except the target category before collecting unique values — impossible combinations are hidden
+- Filter logic: OR within category, AND across categories
 - `_applyFilters()` chains: text search → chip filters → sort → `setState`
-- Available filters are built from ALL items (not the filtered subset)
 - "No results" empty state when filters yield nothing but items exist
 
 ### Import / Export
@@ -163,8 +186,10 @@ Both recipe and roll list pages share the same pattern via `ListSearchBar` widge
 
 ### Key Patterns
 
-- All feature pages use `AppDrawer` for navigation and have a back button that does `Navigator.pop(context)`. The drawer uses `pushReplacementNamed` to swap between feature pages (keeping Home at the stack bottom).
+- All feature pages use `AppDrawer` for navigation (with `drawerEnableOpenDragGesture: false` to prevent conflict with back swipe) and have a back button that does `Navigator.pop(context)`. The drawer uses `pushReplacementNamed` to swap between feature pages (keeping Home at the stack bottom).
+- Home page has a gear icon (top-right) linking to Settings. Settings page has a tappable version row that opens the About dialog.
 - Aperture sliders use index-based discrete sliders over the `ApertureSettings.stopsFrom()` list.
+- All slider labels use `SizedBox(width: 56)` for consistent track lengths (except Lightpad and EC sliders).
 - Distance sliders use logarithmic scale (`log10` / `pow(10, v)`).
 - Film rolls and recipes use UUID v4 as string ID (legacy timestamp IDs auto-migrated on load).
 - Lightpad fullscreen exit uses a 2-second long-press with animated ring progress (`_RingPainter`).
