@@ -3,6 +3,8 @@ import 'package:file_picker/file_picker.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/list_search_bar.dart';
 import '../services/app_localizations.dart';
+import '../services/developer_settings.dart';
+import '../services/error_log.dart';
 import '../services/file_intent_service.dart';
 import '../services/import_export_service.dart';
 import '../services/import_settings.dart';
@@ -281,10 +283,13 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
       final path = await RecipeStorage.exportRecipe(recipe);
       final shareText = recipe['filmStock'] as String? ?? 'Recipe';
       await ImportExportService.shareFile(path, shareText);
-    } catch (e) {
+    } catch (e, stack) {
+      ErrorLog.log('Recipe Export', e, stack);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.t('export_error'))),
+          SnackBar(content: Text(DeveloperSettings.verbose
+              ? '${l.t('export_error')}: $e'
+              : l.t('export_error'))),
         );
       }
     }
@@ -406,10 +411,13 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
           SnackBar(content: Text(msg)),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      ErrorLog.log('Recipe Import', e, stack);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.t('import_error'))),
+          SnackBar(content: Text(DeveloperSettings.verbose
+              ? '${l.t('import_error')}: $e'
+              : l.t('import_error'))),
         );
       }
     }

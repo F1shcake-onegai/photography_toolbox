@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import '../services/developer_settings.dart';
+import '../services/error_log.dart';
 import '../services/film_storage.dart';
 import '../services/import_export_service.dart';
 import 'package:uuid/uuid.dart';
@@ -112,16 +114,16 @@ class _ShotPageState extends State<ShotPage> {
       _imagePath = fileName;
       _resolvedPath = '$imgDir/$fileName';
       setState(() {});
-    } catch (e) {
-      debugPrint('image_picker error: $e');
+    } catch (e, stack) {
+      ErrorLog.log('Image Picker', e, stack);
       if (mounted) {
         final l = AppLocalizations.of(context);
+        final msg = source == ImageSource.camera
+            ? l.t('shot_camera_unavailable')
+            : l.t('shot_gallery_unavailable');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(source == ImageSource.camera
-                ? l.t('shot_camera_unavailable')
-                : l.t('shot_gallery_unavailable')),
-          ),
+          SnackBar(content: Text(DeveloperSettings.verbose
+              ? '$msg: $e' : msg)),
         );
       }
     }

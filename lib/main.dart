@@ -6,7 +6,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'services/app_localizations.dart';
 import 'services/file_intent_service.dart';
 import 'services/import_export_service.dart';
+import 'services/developer_settings.dart';
+import 'services/error_log.dart';
 import 'services/locale_settings.dart';
+import 'pages/developer_page.dart';
 import 'pages/home_page.dart';
 import 'pages/flash_calculator_page.dart';
 import 'pages/dof_calculator_page.dart';
@@ -28,6 +31,8 @@ void main() async {
     yield LicenseEntryWithLineBreaks(['Photography Toolbox'], license);
   });
   final savedLocale = await LocaleSettings.load();
+  await DeveloperSettings.load();
+  await ErrorLog.load();
   runApp(PhotographyToolboxApp(initialLocale: savedLocale));
 }
 
@@ -159,6 +164,7 @@ class _PhotographyToolboxAppState extends State<PhotographyToolboxApp> {
         '/lightpad': (context) => const LightpadPage(),
         '/settings': (context) => const SettingsPage(),
         '/chemical_mixer': (context) => const ChemicalMixerPage(),
+        '/developer': (context) => const DeveloperPage(),
       },
     );
   }

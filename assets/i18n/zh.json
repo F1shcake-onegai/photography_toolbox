@@ -324,5 +324,20 @@
 
   "viewer_save": "保存到相册",
   "viewer_saved": "照片已保存到相册。",
-  "viewer_save_failed": "保存照片失败。"
+  "viewer_save_failed": "保存照片失败。",
+
+  "dev_title": "开发者选项",
+  "dev_verbose": "详细错误信息",
+  "dev_verbose_desc": "在整个应用中显示详细错误信息",
+  "dev_error_logs": "错误日志",
+  "dev_error_logs_count": "{count} 条记录",
+  "dev_clear_logs": "清除日志",
+  "dev_clear_logs_confirm": "删除所有错误日志？",
+  "dev_clear": "清除",
+  "dev_no_logs": "暂无错误日志。",
+  "dev_error_detail": "错误详情",
+  "dev_error_time": "时间",
+  "dev_error_source": "来源",
+  "dev_error_message": "错误",
+  "dev_error_stack": "堆栈跟踪"
 }

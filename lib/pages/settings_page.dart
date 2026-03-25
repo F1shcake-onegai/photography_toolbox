@@ -102,6 +102,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   InkWell(
                     borderRadius: BorderRadius.circular(8),
+                    onLongPress: () => Navigator.pushNamed(context, '/developer'),
                     onTap: () => showDialog(
                       context: context,
                       builder: (context) => AlertDialog(

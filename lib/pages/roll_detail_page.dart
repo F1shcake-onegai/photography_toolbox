@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../services/developer_settings.dart';
+import '../services/error_log.dart';
 import '../services/film_storage.dart';
 import '../services/import_export_service.dart';
 import '../services/light_meter_constants.dart';
@@ -208,10 +210,13 @@ class _RollDetailPageState extends State<RollDetailPage> {
         final path = await FilmStorage.exportRoll(_roll!);
         final name = '${_roll!['brand']} ${_roll!['model']}'.trim();
         await ImportExportService.shareFile(path, name);
-      } catch (e) {
+      } catch (e, stack) {
+        ErrorLog.log('Roll Export', e, stack);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l.t('export_error'))),
+            SnackBar(content: Text(DeveloperSettings.verbose
+                ? '${l.t('export_error')}: $e'
+                : l.t('export_error'))),
           );
         }
       }
@@ -318,10 +323,13 @@ class _RollDetailPageState extends State<RollDetailPage> {
           selectedShotUuids: confirmed.toList());
       final name = '${_roll!['brand']} ${_roll!['model']}'.trim();
       await ImportExportService.shareFile(path, name);
-    } catch (e) {
+    } catch (e, stack) {
+      ErrorLog.log('Roll Export', e, stack);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.t('export_error'))),
+          SnackBar(content: Text(DeveloperSettings.verbose
+              ? '${l.t('export_error')}: $e'
+              : l.t('export_error'))),
         );
       }
     }

@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import '../services/app_localizations.dart';
+import '../services/developer_settings.dart';
+import '../services/error_log.dart';
 
 class ImageViewerPage extends StatelessWidget {
   final String imagePath;
@@ -30,10 +32,13 @@ class ImageViewerPage extends StatelessWidget {
           SnackBar(content: Text(l.t('viewer_saved'))),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      ErrorLog.log('Save to Gallery', e, stack);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.t('viewer_save_failed'))),
+          SnackBar(content: Text(DeveloperSettings.verbose
+              ? '${l.t('viewer_save_failed')}: $e'
+              : l.t('viewer_save_failed'))),
         );
       }
     }

@@ -323,5 +323,20 @@
 
   "viewer_save": "Save to Gallery",
   "viewer_saved": "Photo saved to gallery.",
-  "viewer_save_failed": "Failed to save photo."
+  "viewer_save_failed": "Failed to save photo.",
+
+  "dev_title": "Developer",
+  "dev_verbose": "Verbose Errors",
+  "dev_verbose_desc": "Show detailed error messages across the app",
+  "dev_error_logs": "Error Logs",
+  "dev_error_logs_count": "{count} entries",
+  "dev_clear_logs": "Clear Logs",
+  "dev_clear_logs_confirm": "Delete all error log entries?",
+  "dev_clear": "Clear",
+  "dev_no_logs": "No errors logged.",
+  "dev_error_detail": "Error Detail",
+  "dev_error_time": "Time",
+  "dev_error_source": "Source",
+  "dev_error_message": "Error",
+  "dev_error_stack": "Stack Trace"
 }

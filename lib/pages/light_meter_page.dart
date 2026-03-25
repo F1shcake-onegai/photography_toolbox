@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import '../services/app_localizations.dart';
+import '../services/error_log.dart';
 import '../services/light_meter_constants.dart';
 import '../widgets/app_drawer.dart';
 
@@ -115,8 +116,8 @@ class _LightMeterPageState extends State<LightMeterPage>
       _controller = controller;
       setState(() => _cameraReady = true);
       controller.startImageStream(_processFrame);
-    } catch (e) {
-      debugPrint('Camera init error: $e');
+    } catch (e, stack) {
+      ErrorLog.log('Camera Init', e, stack);
       if (mounted) setState(() => _cameraError = true);
     }
   }

@@ -324,5 +324,20 @@
 
   "viewer_save": "ギャラリーに保存",
   "viewer_saved": "写真をギャラリーに保存しました。",
-  "viewer_save_failed": "写真の保存に失敗しました。"
+  "viewer_save_failed": "写真の保存に失敗しました。",
+
+  "dev_title": "開発者メニュー",
+  "dev_verbose": "詳細エラー表示",
+  "dev_verbose_desc": "アプリ全体で詳細なエラーメッセージを表示",
+  "dev_error_logs": "エラーログ",
+  "dev_error_logs_count": "{count}件",
+  "dev_clear_logs": "ログを消去",
+  "dev_clear_logs_confirm": "すべてのエラーログを削除しますか？",
+  "dev_clear": "消去",
+  "dev_no_logs": "エラーログは���りません。",
+  "dev_error_detail": "エラー詳細",
+  "dev_error_time": "日時",
+  "dev_error_source": "発生元",
+  "dev_error_message": "エラー",
+  "dev_error_stack": "スタックトレース"
 }

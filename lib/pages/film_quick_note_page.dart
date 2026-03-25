@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/list_search_bar.dart';
+import '../services/developer_settings.dart';
+import '../services/error_log.dart';
 import '../services/file_intent_service.dart';
 import '../services/film_storage.dart';
 import '../services/import_export_service.dart';
@@ -487,10 +489,13 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
           SnackBar(content: Text(msg)),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      ErrorLog.log('Roll Import', e, stack);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l.t('import_error'))),
+          SnackBar(content: Text(DeveloperSettings.verbose
+              ? '${l.t('import_error')}: $e'
+              : l.t('import_error'))),
         );
       }
     }
