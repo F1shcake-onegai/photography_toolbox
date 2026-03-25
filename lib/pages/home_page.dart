@@ -84,7 +84,7 @@ class HomePage extends StatelessWidget {
                 onPressed: () => showAboutDialog(
                   context: context,
                   applicationName: 'Photography Toolbox',
-                  applicationVersion: '0.2.0 (Reciprocity / Light Meter Update)',
+                  applicationVersion: '1.2.2 (Build Mar 24, 2026)',
                   children: [
                     Text(l.t('app_about_description')),
                     const SizedBox(height: 12),
