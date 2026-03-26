@@ -312,6 +312,7 @@
   "sort_title": "排序方式",
   "sort_film_stock": "胶片",
   "sort_date_created": "创建日期",
+  "sort_date_modified": "修改日期",
   "sort_developer": "显影液",
   "sort_name": "名称",
   "sort_iso": "ISO",

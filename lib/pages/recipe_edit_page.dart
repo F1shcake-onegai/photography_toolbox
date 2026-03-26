@@ -23,6 +23,23 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
   final Set<int> _expandedAgitation = {};
   bool _redSafelight = false;
 
+  final List<FocusNode> _trimFocusNodes = [];
+  FocusNode _makeTrimNode(TextEditingController ctrl) {
+    final node = FocusNode();
+    node.addListener(() {
+      if (!node.hasFocus) {
+        final trimmed = ctrl.text.trim();
+        if (trimmed != ctrl.text) ctrl.text = trimmed;
+      }
+    });
+    _trimFocusNodes.add(node);
+    return node;
+  }
+  late final FocusNode _filmStockFocus;
+  late final FocusNode _developerFocus;
+  late final FocusNode _dilutionFocus;
+  late final FocusNode _notesFocus;
+
   bool get _isEditing => widget.existingRecipe != null;
 
   @override
@@ -37,6 +54,10 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
         text: r?['dilution'] as String? ?? '');
     _notesCtrl = TextEditingController(
         text: r?['notes'] as String? ?? '');
+    _filmStockFocus = _makeTrimNode(_filmStockCtrl);
+    _developerFocus = _makeTrimNode(_developerCtrl);
+    _dilutionFocus = _makeTrimNode(_dilutionCtrl);
+    _notesFocus = _makeTrimNode(_notesCtrl);
     _processType = r?['processType'] as String? ?? 'bw_neg';
     if (r != null && r.containsKey('baseTemp')) {
       _baseTemp = (r['baseTemp'] as num?)?.toDouble();
@@ -53,6 +74,7 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
 
   @override
   void dispose() {
+    for (final n in _trimFocusNodes) { n.dispose(); }
     _filmStockCtrl.dispose();
     _developerCtrl.dispose();
     _dilutionCtrl.dispose();
@@ -653,6 +675,7 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
             const SizedBox(height: 6),
             TextField(
               controller: _filmStockCtrl,
+              focusNode: _filmStockFocus,
               decoration: InputDecoration(
                 hintText: l.t('recipe_film_stock_hint'),
                 border: const OutlineInputBorder(),
@@ -668,6 +691,7 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
             const SizedBox(height: 6),
             TextField(
               controller: _developerCtrl,
+              focusNode: _developerFocus,
               decoration: InputDecoration(
                 hintText: l.t('recipe_developer_hint'),
                 border: const OutlineInputBorder(),
@@ -682,6 +706,7 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
             const SizedBox(height: 6),
             TextField(
               controller: _dilutionCtrl,
+              focusNode: _dilutionFocus,
               decoration: InputDecoration(
                 hintText: l.t('recipe_dilution_hint'),
                 border: const OutlineInputBorder(),
@@ -718,6 +743,7 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
             const SizedBox(height: 6),
             TextField(
               controller: _notesCtrl,
+              focusNode: _notesFocus,
               maxLines: 2,
               decoration: InputDecoration(
                 hintText: l.t('recipe_notes_hint'),
@@ -900,16 +926,21 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
                           const SizedBox(height: 4),
                           if (type == 'develop' || type == 'custom') ...[
                             const SizedBox(height: 8),
-                            TextField(
-                              controller: TextEditingController(
-                                  text: step['label'] as String? ?? ''),
-                              decoration: InputDecoration(
-                                hintText: l.t('recipe_step_label_hint'),
-                                border: const OutlineInputBorder(),
-                                isDense: true,
-                              ),
-                              onChanged: (v) => step['label'] = v,
-                            ),
+                            Builder(builder: (context) {
+                              final ctrl = TextEditingController(
+                                  text: step['label'] as String? ?? '');
+                              final fn = _makeTrimNode(ctrl);
+                              return TextField(
+                                controller: ctrl,
+                                focusNode: fn,
+                                decoration: InputDecoration(
+                                  hintText: l.t('recipe_step_label_hint'),
+                                  border: const OutlineInputBorder(),
+                                  isDense: true,
+                                ),
+                                onChanged: (v) => step['label'] = v,
+                              );
+                            }),
                             const SizedBox(height: 4),
                             InkWell(
                               onTap: () => setState(() {

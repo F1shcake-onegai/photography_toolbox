@@ -12,7 +12,7 @@ import '../services/import_settings.dart';
 import '../services/app_localizations.dart';
 import 'roll_detail_page.dart';
 
-enum _RollSortField { name, dateCreated, iso }
+enum _RollSortField { dateCreated, dateModified }
 
 class FilmQuickNotePage extends StatefulWidget {
   const FilmQuickNotePage({super.key});
@@ -224,20 +224,14 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
 
     // Sort
     switch (_sortField) {
-      case _RollSortField.name:
-        list.sort((a, b) {
-          final nameA = '${a['brand']} ${a['model']}';
-          final nameB = '${b['brand']} ${b['model']}';
-          return nameA.compareTo(nameB);
-        });
       case _RollSortField.dateCreated:
         list.sort((a, b) => (b['createdAt'] as int? ?? 0)
             .compareTo(a['createdAt'] as int? ?? 0));
-      case _RollSortField.iso:
+      case _RollSortField.dateModified:
         list.sort((a, b) {
-          final isoA = int.tryParse(a['sensitivity'] as String? ?? '') ?? 0;
-          final isoB = int.tryParse(b['sensitivity'] as String? ?? '') ?? 0;
-          return isoA.compareTo(isoB);
+          final modA = (a['modifiedAt'] as int?) ?? (a['createdAt'] as int? ?? 0);
+          final modB = (b['modifiedAt'] as int?) ?? (b['createdAt'] as int? ?? 0);
+          return modB.compareTo(modA);
         });
     }
 
@@ -570,8 +564,8 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
               itemBuilder: (_) => [
                 _sortMenuItem(
                     _RollSortField.dateCreated, l.t('sort_date_created')),
-                _sortMenuItem(_RollSortField.name, l.t('sort_name')),
-                _sortMenuItem(_RollSortField.iso, l.t('sort_iso')),
+                _sortMenuItem(
+                    _RollSortField.dateModified, l.t('sort_date_modified')),
               ],
             ),
           IconButton(
@@ -686,10 +680,11 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
                                         children: [
                                           Row(
                                             children: [
-                                              Icon(Icons.camera_roll,
+                                              Icon(Icons.camera_roll_outlined,
+                                                  size: 16,
                                                   color: colorScheme
-                                                      .primary),
-                                              const SizedBox(width: 12),
+                                                      .onSurfaceVariant),
+                                              const SizedBox(width: 6),
                                               Expanded(
                                                 child: Text(
                                                     '${roll["brand"]} ${roll["model"]}',
@@ -705,12 +700,11 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
                                                           .onSurfaceVariant)),
                                             ],
                                           ),
-                                          // Tags are internal-only (used for search/filter, not displayed)
                                           const SizedBox(height: 4),
                                           Padding(
                                             padding:
                                                 const EdgeInsets.only(
-                                                    left: 36),
+                                                    left: 22),
                                             child: Text(
                                                 'ISO ${roll["sensitivity"]}'
                                                 ' \u2022 ${l.t("film_shots_count", {"count": shots.length.toString()})}',
@@ -722,24 +716,24 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
                                           if ((roll["comments"]
                                                       as String?)
                                                   ?.isNotEmpty ==
-                                              true)
+                                              true) ...[
                                             Padding(
-                                              padding:
-                                                  const EdgeInsets.only(
-                                                      left: 36, top: 4),
-                                              child: Text(
-                                                  roll["comments"]
-                                                      as String,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow
-                                                      .ellipsis,
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontStyle: FontStyle
-                                                          .italic,
-                                                      color: colorScheme
-                                                          .onSurfaceVariant)),
+                                              padding: const EdgeInsets.only(top: 12, bottom: 8),
+                                              child: Divider(height: 1, color: colorScheme.outlineVariant),
                                             ),
+                                            Text(
+                                                roll["comments"]
+                                                    as String,
+                                                maxLines: 2,
+                                                overflow: TextOverflow
+                                                    .ellipsis,
+                                                style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontStyle: FontStyle
+                                                        .italic,
+                                                    color: colorScheme
+                                                        .onSurfaceVariant)),
+                                          ],
                                         ],
                                       ),
                                     ),
@@ -770,12 +764,16 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
     );
   }
 
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
   String _formatDate(Map<String, dynamic> roll) {
     final ms = roll['createdAt'] as int? ??
         int.tryParse(roll['id'] as String? ?? '');
     if (ms == null) return '';
     final dt = DateTime.fromMillisecondsSinceEpoch(ms);
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    return '${_months[dt.month - 1]} ${dt.day.toString().padLeft(2, '0')}, ${dt.year}';
   }
 }

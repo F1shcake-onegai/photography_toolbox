@@ -28,6 +28,7 @@ class ShotPage extends StatefulWidget {
 class _ShotPageState extends State<ShotPage> {
   late TextEditingController _seqCtrl;
   late TextEditingController _commentCtrl;
+  late FocusNode _commentFocus;
   String? _imagePath;
   String? _resolvedPath;
   final _picker = ImagePicker();
@@ -46,6 +47,12 @@ class _ShotPageState extends State<ShotPage> {
         text: widget.defaultSequence.toString());
     _commentCtrl = TextEditingController(
         text: widget.existingShot?['comment'] as String? ?? '');
+    _commentFocus = FocusNode()..addListener(() {
+      if (!_commentFocus.hasFocus) {
+        final trimmed = _commentCtrl.text.trim();
+        if (trimmed != _commentCtrl.text) _commentCtrl.text = trimmed;
+      }
+    });
     _imagePath =
         widget.existingShot?['imagePath'] as String?;
     _resolveImage();
@@ -63,6 +70,7 @@ class _ShotPageState extends State<ShotPage> {
   @override
   void dispose() {
     _seqCtrl.dispose();
+    _commentFocus.dispose();
     _commentCtrl.dispose();
     super.dispose();
   }
@@ -267,6 +275,7 @@ class _ShotPageState extends State<ShotPage> {
             const SizedBox(height: 6),
             TextField(
               controller: _commentCtrl,
+              focusNode: _commentFocus,
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: l.t('shot_comment_hint'),

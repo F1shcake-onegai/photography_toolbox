@@ -126,6 +126,7 @@ class RecipeStorage {
   }
 
   static Future<void> updateRecipe(Map<String, dynamic> recipe) async {
+    recipe['modifiedAt'] = DateTime.now().millisecondsSinceEpoch;
     final recipes = await loadRecipes();
     final idx = recipes.indexWhere((r) => r['id'] == recipe['id']);
     if (idx >= 0) {

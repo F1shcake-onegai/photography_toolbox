@@ -12,7 +12,7 @@ import '../services/recipe_storage.dart';
 import 'recipe_edit_page.dart';
 import 'timer_running_page.dart';
 
-enum _RecipeSortField { filmStock, dateCreated, developer }
+enum _RecipeSortField { dateCreated, dateModified }
 
 class DarkroomTimerPage extends StatefulWidget {
   const DarkroomTimerPage({super.key});
@@ -217,15 +217,15 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
 
     // Sort
     switch (_sortField) {
-      case _RecipeSortField.filmStock:
-        list.sort((a, b) => (a['filmStock'] as String? ?? '')
-            .compareTo(b['filmStock'] as String? ?? ''));
       case _RecipeSortField.dateCreated:
         list.sort((a, b) => (b['createdAt'] as int? ?? 0)
             .compareTo(a['createdAt'] as int? ?? 0));
-      case _RecipeSortField.developer:
-        list.sort((a, b) => (a['developer'] as String? ?? '')
-            .compareTo(b['developer'] as String? ?? ''));
+      case _RecipeSortField.dateModified:
+        list.sort((a, b) {
+          final modA = (a['modifiedAt'] as int?) ?? (a['createdAt'] as int? ?? 0);
+          final modB = (b['modifiedAt'] as int?) ?? (b['createdAt'] as int? ?? 0);
+          return modB.compareTo(modA);
+        });
     }
 
     setState(() => _filteredRecipes = list);
@@ -569,10 +569,8 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
               itemBuilder: (_) => [
                 _sortMenuItem(_RecipeSortField.dateCreated,
                     l.t('sort_date_created')),
-                _sortMenuItem(_RecipeSortField.filmStock,
-                    l.t('sort_film_stock')),
-                _sortMenuItem(_RecipeSortField.developer,
-                    l.t('sort_developer')),
+                _sortMenuItem(_RecipeSortField.dateModified,
+                    l.t('sort_date_modified')),
               ],
             ),
           IconButton(

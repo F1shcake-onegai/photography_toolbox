@@ -24,6 +24,10 @@ class _RollDetailPageState extends State<RollDetailPage> {
   late TextEditingController _isoCtrl;
   late TextEditingController _commentCtrl;
   Timer? _saveTimer;
+  final List<FocusNode> _trimFocusNodes = [];
+  late final FocusNode _brandFocus;
+  late final FocusNode _modelFocus;
+  late final FocusNode _commentFocus;
   bool _deleted = false;
   double _ec = 0.0;
   double _ecStep = 1 / 3;
@@ -36,6 +40,9 @@ class _RollDetailPageState extends State<RollDetailPage> {
     _modelCtrl = TextEditingController();
     _isoCtrl = TextEditingController();
     _commentCtrl = TextEditingController();
+    _brandFocus = _makeTrimNode(_brandCtrl);
+    _modelFocus = _makeTrimNode(_modelCtrl);
+    _commentFocus = _makeTrimNode(_commentCtrl);
     _loadRoll();
     _loadEcStep();
     _loadImgDir();
@@ -123,9 +130,23 @@ class _RollDetailPageState extends State<RollDetailPage> {
   }
 
   @override
+  FocusNode _makeTrimNode(TextEditingController ctrl) {
+    final node = FocusNode();
+    node.addListener(() {
+      if (!node.hasFocus) {
+        final trimmed = ctrl.text.trim();
+        if (trimmed != ctrl.text) ctrl.text = trimmed;
+      }
+    });
+    _trimFocusNodes.add(node);
+    return node;
+  }
+
+  @override
   void dispose() {
     _saveTimer?.cancel();
     _saveRoll();
+    for (final n in _trimFocusNodes) { n.dispose(); }
     _brandCtrl.dispose();
     _modelCtrl.dispose();
     _isoCtrl.dispose();
@@ -417,6 +438,7 @@ class _RollDetailPageState extends State<RollDetailPage> {
             const SizedBox(height: 6),
             TextField(
               controller: _brandCtrl,
+              focusNode: _brandFocus,
               onChanged: (_) => _onFieldChanged(),
               decoration: InputDecoration(
                 hintText: l.t('film_brand_hint'),
@@ -431,6 +453,7 @@ class _RollDetailPageState extends State<RollDetailPage> {
             const SizedBox(height: 6),
             TextField(
               controller: _modelCtrl,
+              focusNode: _modelFocus,
               onChanged: (_) => _onFieldChanged(),
               decoration: InputDecoration(
                 hintText: l.t('film_model_hint'),
@@ -526,6 +549,7 @@ class _RollDetailPageState extends State<RollDetailPage> {
             const SizedBox(height: 6),
             TextField(
               controller: _commentCtrl,
+              focusNode: _commentFocus,
               maxLines: 3,
               onChanged: (_) => _onFieldChanged(),
               decoration: InputDecoration(

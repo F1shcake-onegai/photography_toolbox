@@ -99,6 +99,7 @@ class FilmStorage {
   }
 
   static Future<void> updateRoll(Map<String, dynamic> roll) async {
+    roll['modifiedAt'] = DateTime.now().millisecondsSinceEpoch;
     final rolls = await loadRolls();
     final idx = rolls.indexWhere((r) => r['id'] == roll['id']);
     if (idx >= 0) {
