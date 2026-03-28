@@ -5,7 +5,6 @@ import '../services/developer_settings.dart';
 import '../services/error_log.dart';
 import '../services/film_storage.dart';
 import '../services/import_export_service.dart';
-import '../services/light_meter_constants.dart';
 import '../services/app_localizations.dart';
 import 'shot_page.dart';
 
@@ -29,8 +28,7 @@ class _RollDetailPageState extends State<RollDetailPage> {
   late final FocusNode _modelFocus;
   late final FocusNode _commentFocus;
   bool _deleted = false;
-  double _ec = 0.0;
-  double _ecStep = 1 / 3;
+  int _pushPull = 0;
   String? _imgDir;
 
   @override
@@ -44,7 +42,6 @@ class _RollDetailPageState extends State<RollDetailPage> {
     _modelFocus = _makeTrimNode(_modelCtrl);
     _commentFocus = _makeTrimNode(_commentCtrl);
     _loadRoll();
-    _loadEcStep();
     _loadImgDir();
   }
 
@@ -53,44 +50,9 @@ class _RollDetailPageState extends State<RollDetailPage> {
     if (mounted) setState(() => _imgDir = dir);
   }
 
-  Future<void> _loadEcStep() async {
-    final step = await ExposureStepSettings.load();
-    setState(() {
-      _ecStep = switch (step) {
-        ExposureStep.full => 1.0,
-        ExposureStep.half => 0.5,
-        ExposureStep.third => 1 / 3,
-        ExposureStep.quarter => 0.25,
-      };
-      _ec = (_ec / _ecStep).roundToDouble() * _ecStep;
-    });
-  }
-
-  String get _ecLabel {
-    if (_ec == 0) return '0';
-    final abs = _ec.abs();
-    final sign = _ec > 0 ? '+' : '-';
-    final thirds = (abs / (1 / 3)).round();
-    final quarters = (abs / 0.25).round();
-    if ((abs - thirds * (1 / 3)).abs() < 0.01) {
-      final whole = thirds ~/ 3;
-      final rem = thirds % 3;
-      if (rem == 0) return '$sign$whole';
-      if (whole == 0) return '$sign$rem/3';
-      return '$sign$whole $rem/3';
-    }
-    if ((abs - quarters * 0.25).abs() < 0.01) {
-      final whole = quarters ~/ 4;
-      final rem = quarters % 4;
-      if (rem == 0) return '$sign$whole';
-      if (rem == 2) {
-        if (whole == 0) return '$sign\u00bd';
-        return '$sign$whole\u00bd';
-      }
-      if (whole == 0) return '$sign$rem/4';
-      return '$sign$whole $rem/4';
-    }
-    return '${_ec > 0 ? "+" : ""}${_ec.toStringAsFixed(1)}';
+  String get _pushPullLabel {
+    if (_pushPull == 0) return '0';
+    return _pushPull > 0 ? '+$_pushPull' : '$_pushPull';
   }
 
   Future<void> _loadRoll() async {
@@ -105,8 +67,8 @@ class _RollDetailPageState extends State<RollDetailPage> {
         _modelCtrl.text = roll['model'] as String? ?? '';
         _isoCtrl.text = roll['sensitivity'] as String? ?? '';
         _commentCtrl.text = roll['comments'] as String? ?? '';
-        _ec = (roll['ec'] as num?)?.toDouble() ?? 0.0;
-        _ec = (_ec / _ecStep).roundToDouble() * _ecStep;
+        _pushPull = (roll['pushPull'] as int?) ??
+            (roll['ec'] as num?)?.round() ?? 0;
       });
     }
   }
@@ -123,13 +85,12 @@ class _RollDetailPageState extends State<RollDetailPage> {
       _roll!['brand'] = _brandCtrl.text;
       _roll!['model'] = _modelCtrl.text;
       _roll!['sensitivity'] = _isoCtrl.text;
-      _roll!['ec'] = _ec;
+      _roll!['pushPull'] = _pushPull;
       _roll!['comments'] = _commentCtrl.text;
       FilmStorage.updateRoll(_roll!);
     }
   }
 
-  @override
   FocusNode _makeTrimNode(TextEditingController ctrl) {
     final node = FocusNode();
     node.addListener(() {
@@ -489,13 +450,13 @@ class _RollDetailPageState extends State<RollDetailPage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Exposure Compensation (3/4 width)
+                // Push / Pull (3/4 width)
                 Flexible(
                   flex: 3,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(l.t('roll_ec'),
+                      Text(l.t('roll_push_pull'),
                           style: TextStyle(
                               fontSize: 12,
                               color: colorScheme.onSurfaceVariant)),
@@ -504,12 +465,12 @@ class _RollDetailPageState extends State<RollDetailPage> {
                         children: [
                           GestureDetector(
                             onDoubleTap: () {
-                              setState(() => _ec = 0.0);
+                              setState(() => _pushPull = 0);
                               _onFieldChanged();
                             },
                             child: SizedBox(
-                              width: 56,
-                              child: Text(_ecLabel,
+                              width: 40,
+                              child: Text(_pushPullLabel,
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context)
                                       .textTheme
@@ -520,15 +481,13 @@ class _RollDetailPageState extends State<RollDetailPage> {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Slider(
-                              value: _ec,
+                              value: _pushPull.toDouble(),
                               min: -3.0,
                               max: 3.0,
-                              divisions: (6 / _ecStep).round(),
-                              label: _ecLabel,
+                              divisions: 6,
+                              label: _pushPullLabel,
                               onChanged: (v) {
-                                setState(() {
-                                  _ec = (v / _ecStep).roundToDouble() * _ecStep;
-                                });
+                                setState(() => _pushPull = v.round());
                                 _onFieldChanged();
                               },
                             ),

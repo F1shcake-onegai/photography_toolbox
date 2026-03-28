@@ -78,7 +78,8 @@
   "roll_delete_message": "Are you sure you want to delete this roll? This cannot be undone.",
   "roll_cancel": "Cancel",
   "roll_delete": "Delete",
-  "roll_ec": "Exposure Comp.",
+  "roll_push_pull": "Push / Pull",
+  "shot_ec": "Exposure Comp.",
   "roll_comments": "Comments",
   "roll_comments_hint": "Add notes about this roll...",
   "roll_shots_header": "Shots ({count})",
@@ -324,7 +325,7 @@
   "tag_brand": "Brand",
   "tag_model": "Model",
   "tag_iso": "ISO",
-  "tag_ec": "Compensation",
+  "tag_push_pull": "Push/Pull",
   "filter_yes": "Yes",
   "filter_no": "No",
 

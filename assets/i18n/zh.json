@@ -77,7 +77,8 @@
   "roll_delete_message": "确定要删除这卷胶卷吗？此操作无法撤销。",
   "roll_cancel": "取消",
   "roll_delete": "删除",
-  "roll_ec": "曝光补偿",
+  "roll_push_pull": "增减感",
+  "shot_ec": "曝光补偿",
   "roll_comments": "备注",
   "roll_comments_hint": "添加关于这卷胶卷的备注...",
   "roll_shots_header": "照片（{count}）",
@@ -323,7 +324,7 @@
   "tag_brand": "品牌",
   "tag_model": "型号",
   "tag_iso": "ISO",
-  "tag_ec": "曝光补偿",
+  "tag_push_pull": "增减感",
   "filter_yes": "是",
   "filter_no": "否",
 

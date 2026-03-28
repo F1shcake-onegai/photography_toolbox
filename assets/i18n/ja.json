@@ -77,7 +77,8 @@
   "roll_delete_message": "このロールを削除しますか？この操作は取り消せません。",
   "roll_cancel": "キャンセル",
   "roll_delete": "削除",
-  "roll_ec": "露出補正",
+  "roll_push_pull": "増減感",
+  "shot_ec": "露出補正",
   "roll_comments": "コメント",
   "roll_comments_hint": "このロールについてメモを追加...",
   "roll_shots_header": "ショット（{count}）",
@@ -323,7 +324,7 @@
   "tag_brand": "ブランド",
   "tag_model": "モデル",
   "tag_iso": "ISO",
-  "tag_ec": "露出補正",
+  "tag_push_pull": "増減感",
   "filter_yes": "あり",
   "filter_no": "なし",
 

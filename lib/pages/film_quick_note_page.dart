@@ -68,8 +68,9 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
     final sensitivity = roll['sensitivity'] as String? ?? '';
     if (brand.isNotEmpty) tags['brand'] = brand;
     if (sensitivity.isNotEmpty) tags['iso'] = 'ISO $sensitivity';
-    final ec = (roll['ec'] as num?)?.toDouble() ?? 0.0;
-    tags['ec'] = ec != 0.0 ? 'yes' : 'no';
+    final pp = (roll['pushPull'] as int?) ??
+        (roll['ec'] as num?)?.round() ?? 0;
+    tags['push_pull'] = pp != 0 ? 'yes' : 'no';
     return tags;
   }
 
@@ -99,13 +100,13 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
   }
 
   List<FilterField> _buildFilterFields(AppLocalizations l) {
-    final categories = ['brand', 'iso', 'ec'];
+    final categories = ['brand', 'iso', 'push_pull'];
     final labels = {
       'brand': l.t('tag_brand'),
       'iso': l.t('tag_iso'),
-      'ec': l.t('tag_ec'),
+      'push_pull': l.t('tag_push_pull'),
     };
-    final ecDisplayLabels = {
+    final ppDisplayLabels = {
       'yes': l.t('filter_yes'),
       'no': l.t('filter_no'),
     };
@@ -123,7 +124,7 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
           final nb = int.tryParse(b.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
           return na.compareTo(nb);
         });
-      } else if (cat == 'ec') {
+      } else if (cat == 'push_pull') {
         sorted.sort((a, b) => a == 'yes' ? -1 : 1);
       } else {
         sorted.sort();
@@ -132,7 +133,7 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
         category: cat,
         label: labels[cat]!,
         values: sorted,
-        displayLabels: cat == 'ec' ? ecDisplayLabels : null,
+        displayLabels: cat == 'push_pull' ? ppDisplayLabels : null,
       );
     }).toList();
   }

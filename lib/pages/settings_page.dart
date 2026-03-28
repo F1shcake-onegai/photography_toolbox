@@ -116,7 +116,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             const SizedBox(height: 4),
                             Padding(
                               padding: const EdgeInsets.only(left: 16.0),
-                              child: Text('1.3.3 (Build Mar 26, 2026)',
+                              child: Text('1.3.4 (Build Mar 28, 2026)',
                                   style: Theme.of(context).textTheme.bodyMedium),
                             ),
                             const SizedBox(height: 8),
@@ -145,7 +145,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             onPressed: () => showLicensePage(
                               context: context,
                               applicationName: 'Photography Toolbox',
-                              applicationVersion: '1.3.3 (Build Mar 26, 2026)',
+                              applicationVersion: '1.3.4 (Build Mar 28, 2026)',
                               applicationLegalese: '2026 @f1shcake_onegai',
                             ),
                             child: Text(MaterialLocalizations.of(context).viewLicensesButtonLabel),
@@ -171,7 +171,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                         .titleMedium
                                         ?.copyWith(fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 2),
-                                Text('1.3.3 (Build Mar 26, 2026)',
+                                Text('1.3.4 (Build Mar 28, 2026)',
                                     style: TextStyle(
                                         fontSize: 12,
                                         color: colorScheme.onSurfaceVariant)),

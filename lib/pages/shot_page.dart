@@ -7,6 +7,7 @@ import '../services/developer_settings.dart';
 import '../services/error_log.dart';
 import '../services/film_storage.dart';
 import '../services/import_export_service.dart';
+import '../services/light_meter_constants.dart';
 import 'package:uuid/uuid.dart';
 import '../services/app_localizations.dart';
 import 'image_viewer_page.dart';
@@ -32,6 +33,8 @@ class _ShotPageState extends State<ShotPage> {
   String? _imagePath;
   String? _resolvedPath;
   final _picker = ImagePicker();
+  double _ec = 0.0;
+  double _ecStep = 1 / 3;
 
   bool get _isEditing => widget.existingShot != null;
 
@@ -53,9 +56,53 @@ class _ShotPageState extends State<ShotPage> {
         if (trimmed != _commentCtrl.text) _commentCtrl.text = trimmed;
       }
     });
+    _ec = (widget.existingShot?['ec'] as num?)?.toDouble() ?? 0.0;
+    _loadEcStep();
     _imagePath =
         widget.existingShot?['imagePath'] as String?;
     _resolveImage();
+  }
+
+  Future<void> _loadEcStep() async {
+    final step = await ExposureStepSettings.load();
+    if (mounted) {
+      setState(() {
+        _ecStep = switch (step) {
+          ExposureStep.full => 1.0,
+          ExposureStep.half => 0.5,
+          ExposureStep.third => 1 / 3,
+          ExposureStep.quarter => 0.25,
+        };
+        _ec = (_ec / _ecStep).roundToDouble() * _ecStep;
+      });
+    }
+  }
+
+  String get _ecLabel {
+    if (_ec == 0) return '0';
+    final abs = _ec.abs();
+    final sign = _ec > 0 ? '+' : '-';
+    final thirds = (abs / (1 / 3)).round();
+    final quarters = (abs / 0.25).round();
+    if ((abs - thirds * (1 / 3)).abs() < 0.01) {
+      final whole = thirds ~/ 3;
+      final rem = thirds % 3;
+      if (rem == 0) return '$sign$whole';
+      if (whole == 0) return '$sign$rem/3';
+      return '$sign$whole $rem/3';
+    }
+    if ((abs - quarters * 0.25).abs() < 0.01) {
+      final whole = quarters ~/ 4;
+      final rem = quarters % 4;
+      if (rem == 0) return '$sign$whole';
+      if (rem == 2) {
+        if (whole == 0) return '$sign\u00bd';
+        return '$sign$whole\u00bd';
+      }
+      if (whole == 0) return '$sign$rem/4';
+      return '$sign$whole $rem/4';
+    }
+    return '${_ec > 0 ? "+" : ""}${_ec.toStringAsFixed(1)}';
   }
 
   Future<void> _resolveImage() async {
@@ -164,6 +211,7 @@ class _ShotPageState extends State<ShotPage> {
       'sequence': seq,
       'imagePath': _imagePath ?? '',
       'comment': _commentCtrl.text,
+      'ec': _ec,
       'createdAt': widget.existingShot?['createdAt'] ??
           DateTime.now().millisecondsSinceEpoch,
     };
@@ -204,7 +252,45 @@ class _ShotPageState extends State<ShotPage> {
               decoration: const InputDecoration(
                   border: OutlineInputBorder()),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            // Exposure compensation
+            Text(l.t('shot_ec'),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                GestureDetector(
+                  onDoubleTap: () => setState(() => _ec = 0.0),
+                  child: SizedBox(
+                    width: 56,
+                    child: Text(_ecLabel,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Slider(
+                    value: _ec,
+                    min: -3.0,
+                    max: 3.0,
+                    divisions: (6 / _ecStep).round(),
+                    label: _ecLabel,
+                    onChanged: (v) {
+                      setState(() {
+                        _ec = (v / _ecStep).roundToDouble() * _ecStep;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             // Photo section
             Text(l.t('shot_photo'),
                 style: TextStyle(
