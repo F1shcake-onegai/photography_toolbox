@@ -7,7 +7,6 @@ import 'package:camera/camera.dart';
 import '../services/app_localizations.dart';
 import '../services/error_log.dart';
 import '../services/light_meter_constants.dart';
-import '../widgets/app_drawer.dart';
 
 class LightMeterPage extends StatefulWidget {
   const LightMeterPage({super.key});
@@ -677,8 +676,6 @@ class _LightMeterPageState extends State<LightMeterPage>
         ),
         title: Text(l.t('lightmeter_title')),
       ),
-      drawer: const AppDrawer(),
-      drawerEnableOpenDragGesture: false,
       body: Column(
         children: [
           // Camera preview

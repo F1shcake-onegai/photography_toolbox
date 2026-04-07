@@ -10,9 +10,9 @@ import '../services/app_localizations.dart';
 import 'chemical_mixer_page.dart';
 
 // ───── Safelight darkroom palette ─────
-const _slBg = Color(0xFF0A0000);
-const _slSurface = Color(0xFF1A0505);
-const _slSurfaceHigh = Color(0xFF2A0A0A);
+const _slBg = Color(0xFF000000);
+const _slSurface = Color(0xFF0D0202);
+const _slSurfaceHigh = Color(0xFF1A0505);
 const _slRed = Color(0xFFCC2020);
 const _slRedBright = Color(0xFFFF3B3B);
 const _slRedDim = Color(0xFF882222);

@@ -216,90 +216,103 @@ class _RollDetailPageState extends State<RollDetailPage> {
     // Shot selection dialog
     final selected = Set<String>.from(
         shots.map((s) => s['uuid'] as String));
-    final confirmed = await showDialog<Set<String>>(
+    final confirmed = await showModalBottomSheet<Set<String>>(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            return AlertDialog(
-              title: Text(l.t('share_select_shots')),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => setDialogState(() {
-                            selected.addAll(
-                                shots.map((s) => s['uuid'] as String));
-                          }),
-                          child: Text(l.t('share_select_all')),
+        return DraggableScrollableSheet(
+          initialChildSize: 0.5,
+          minChildSize: 0.3,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (ctx, scrollController) {
+            return StatefulBuilder(
+              builder: (ctx, setSheetState) {
+                return SafeArea(
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(l.t('share_select_shots'),
+                                  style: Theme.of(ctx).textTheme.titleMedium),
+                            ),
+                            TextButton(
+                              onPressed: () => setSheetState(() {
+                                selected.addAll(
+                                    shots.map((s) => s['uuid'] as String));
+                              }),
+                              child: Text(l.t('share_select_all')),
+                            ),
+                            TextButton(
+                              onPressed: () =>
+                                  setSheetState(() => selected.clear()),
+                              child: Text(l.t('share_select_none')),
+                            ),
+                          ],
                         ),
-                        TextButton(
-                          onPressed: () =>
-                              setDialogState(() => selected.clear()),
-                          child: Text(l.t('share_select_none')),
-                        ),
-                      ],
-                    ),
-                    Flexible(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: shots.length,
-                        itemBuilder: (_, i) {
-                          final shot = shots[i];
-                          final uuid = shot['uuid'] as String;
-                          final seq = shot['sequence'] as int;
-                          final comment =
-                              shot['comment'] as String? ?? '';
-                          return CheckboxListTile(
-                            value: selected.contains(uuid),
-                            onChanged: (v) => setDialogState(() {
-                              if (v == true) {
-                                selected.add(uuid);
-                              } else {
-                                selected.remove(uuid);
-                              }
-                            }),
-                            title: Text('#$seq'),
-                            subtitle: comment.isNotEmpty
-                                ? Text(comment,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis)
-                                : null,
-                            dense: true,
-                          );
-                        },
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l.t('share_shot_count',
-                          {'count': selected.length.toString()}),
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(ctx)
-                              .colorScheme
-                              .onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text(l.t('import_cancel')),
-                ),
-                FilledButton(
-                  onPressed: selected.isEmpty
-                      ? null
-                      : () => Navigator.pop(ctx, selected),
-                  child: Text(l.t('share_share')),
-                ),
-              ],
+                      Expanded(
+                        child: ListView.builder(
+                          controller: scrollController,
+                          itemCount: shots.length,
+                          itemBuilder: (_, i) {
+                            final shot = shots[i];
+                            final uuid = shot['uuid'] as String;
+                            final seq = shot['sequence'] as int;
+                            final comment =
+                                shot['comment'] as String? ?? '';
+                            return CheckboxListTile(
+                              value: selected.contains(uuid),
+                              onChanged: (v) => setSheetState(() {
+                                if (v == true) {
+                                  selected.add(uuid);
+                                } else {
+                                  selected.remove(uuid);
+                                }
+                              }),
+                              title: Text('#$seq'),
+                              subtitle: comment.isNotEmpty
+                                  ? Text(comment,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis)
+                                  : null,
+                              dense: true,
+                            );
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              l.t('share_shot_count',
+                                  {'count': selected.length.toString()}),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(ctx)
+                                      .colorScheme
+                                      .onSurfaceVariant),
+                            ),
+                            const SizedBox(height: 12),
+                            FilledButton(
+                              onPressed: selected.isEmpty
+                                  ? null
+                                  : () => Navigator.pop(ctx, selected),
+                              child: Text(l.t('share_share')),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             );
           },
         );
@@ -570,19 +583,26 @@ class _RollDetailPageState extends State<RollDetailPage> {
                                   .onSurfaceVariant)),
                     ),
                   )
-                : GridView.builder(
-                    shrinkWrap: true,
-                    physics:
-                        const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                    ),
-                    itemCount: _shots.length,
-                    itemBuilder: (context, index) {
-                      return _shotTile(index);
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final cols = constraints.maxWidth > 900 ? 6
+                          : constraints.maxWidth > 700 ? 5
+                          : constraints.maxWidth > 500 ? 4 : 3;
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics:
+                            const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: cols,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                        ),
+                        itemCount: _shots.length,
+                        itemBuilder: (context, index) {
+                          return _shotTile(index);
+                        },
+                      );
                     },
                   ),
           ],

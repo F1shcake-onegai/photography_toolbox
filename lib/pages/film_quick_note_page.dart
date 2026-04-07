@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
-import '../widgets/app_drawer.dart';
 import '../widgets/list_search_bar.dart';
 import '../services/developer_settings.dart';
 import '../services/error_log.dart';
@@ -10,6 +8,7 @@ import '../services/film_storage.dart';
 import '../services/import_export_service.dart';
 import '../services/import_settings.dart';
 import '../services/app_localizations.dart';
+import 'new_roll_page.dart';
 import 'roll_detail_page.dart';
 
 enum _RollSortField { dateCreated, dateModified }
@@ -240,89 +239,26 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
   }
 
   Future<void> _addRoll() async {
-    final l = AppLocalizations.of(context);
-    final brandCtrl = TextEditingController();
-    final modelCtrl = TextEditingController();
-    final isoCtrl = TextEditingController();
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.t('film_new_roll')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: brandCtrl,
-              decoration: InputDecoration(
-                labelText: l.t('film_brand'),
-                hintText: l.t('film_brand_hint'),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: modelCtrl,
-              decoration: InputDecoration(
-                labelText: l.t('film_model'),
-                hintText: l.t('film_model_hint'),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: isoCtrl,
-              maxLength: 4,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(4),
-              ],
-              decoration: InputDecoration(
-                labelText: l.t('film_sensitivity'),
-                hintText: l.t('film_sensitivity_hint'),
-                border: OutlineInputBorder(),
-                counterText: '',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.t('film_cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.t('film_create')),
-          ),
-        ],
+    final result = await Navigator.push<Map<String, String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NewRollPage(existingRolls: _rolls),
       ),
     );
+    if (result == null) return;
 
-    if (result == true) {
-      final brand = brandCtrl.text.trim();
-      final model = modelCtrl.text.trim();
-      final iso = isoCtrl.text.trim();
-      if (brand.isEmpty && model.isEmpty) return;
-
-      final roll = <String, dynamic>{
-        'id': FilmStorage.newUuid(),
-        'createdAt': DateTime.now().millisecondsSinceEpoch,
-        'brand': brand,
-        'model': model,
-        'sensitivity': iso,
-        'comments': '',
-        'shots': <Map<String, dynamic>>[],
-      };
-      _rolls.add(roll);
-      await FilmStorage.saveRolls(_rolls);
-      _applyFilters();
-    }
-
-    brandCtrl.dispose();
-    modelCtrl.dispose();
-    isoCtrl.dispose();
+    final roll = <String, dynamic>{
+      'id': FilmStorage.newUuid(),
+      'createdAt': DateTime.now().millisecondsSinceEpoch,
+      'brand': result['brand'] ?? '',
+      'model': result['model'] ?? '',
+      'sensitivity': result['sensitivity'] ?? '',
+      'comments': '',
+      'shots': <Map<String, dynamic>>[],
+    };
+    _rolls.add(roll);
+    await FilmStorage.saveRolls(_rolls);
+    _applyFilters();
   }
 
   Future<void> _openRoll(Map<String, dynamic> roll) async {
@@ -353,18 +289,8 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
         parsed = await ImportExportService.parseImportFile(filePath);
       } on FormatException catch (e) {
         if (mounted) {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text(l.t('import_error')),
-              content: Text(e.message),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${l.t('import_error')}: ${e.message}')),
           );
         }
         return;
@@ -372,18 +298,8 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
 
       if (parsed.type != ExportFileType.roll) {
         if (mounted) {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text(l.t('import_error')),
-              content: Text(l.t('import_invalid_file')),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l.t('import_invalid_file'))),
           );
         }
         return;
@@ -394,21 +310,32 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
         final list = parsed.smallImages.entries
             .map((e) => '${e.key} (${e.value})')
             .join('\n');
-        final cont = await showDialog<bool>(
+        final cont = await showModalBottomSheet<bool>(
           context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l.t('import_small_images_title')),
-            content: Text(l.t('import_small_images_message', {'list': list})),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(l.t('import_cancel')),
+          builder: (ctx) => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(l.t('import_small_images_title'),
+                      style: Theme.of(ctx).textTheme.titleMedium),
+                  const SizedBox(height: 16),
+                  Text(l.t('import_small_images_message', {'list': list})),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(l.t('import_confirm')),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(l.t('import_cancel')),
+                  ),
+                ],
               ),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text(l.t('import_confirm')),
-              ),
-            ],
+            ),
           ),
         );
         if (cont != true) {
@@ -420,32 +347,37 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
       // Show preview confirmation
       if (!mounted) return;
       final summary = ImportExportService.previewSummary(parsed);
-      final confirmed = await showDialog<bool>(
+      final confirmed = await showModalBottomSheet<bool>(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(l.t('import_preview_roll_title')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l.t('import_preview_roll_film',
-                  {'value': summary['film']!})),
-              Text(l.t('import_preview_roll_shots',
-                  {'value': summary['shots']!})),
-              Text(l.t('import_preview_roll_images',
-                  {'value': summary['images']!})),
-            ],
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l.t('import_preview_roll_title'),
+                    style: Theme.of(ctx).textTheme.titleMedium),
+                const SizedBox(height: 16),
+                Text(l.t('import_preview_roll_film',
+                    {'value': summary['film']!})),
+                Text(l.t('import_preview_roll_shots',
+                    {'value': summary['shots']!})),
+                Text(l.t('import_preview_roll_images',
+                    {'value': summary['images']!})),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(l.t('import_confirm')),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text(l.t('import_cancel')),
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.t('import_cancel')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l.t('import_confirm')),
-            ),
-          ],
         ),
       );
       if (confirmed != true || !mounted) {
@@ -499,29 +431,44 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
   }
 
   Future<DuplicateAction?> _showDuplicateDialog(AppLocalizations l) {
-    return showDialog<DuplicateAction>(
+    return showModalBottomSheet<DuplicateAction>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.t('import_duplicate_title')),
-        content: Text(l.t('import_duplicate_message')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l.t('import_cancel')),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l.t('import_duplicate_title'),
+                  style: Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text(l.t('import_duplicate_message'),
+                  style: TextStyle(
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, DuplicateAction.replace),
+                child: Text(l.t('import_duplicate_replace')),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(ctx, DuplicateAction.duplicate),
+                child: Text(l.t('import_duplicate_copy')),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(ctx, DuplicateAction.skip),
+                child: Text(l.t('import_duplicate_skip')),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(l.t('import_cancel')),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, DuplicateAction.skip),
-            child: Text(l.t('import_duplicate_skip')),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, DuplicateAction.duplicate),
-            child: Text(l.t('import_duplicate_copy')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, DuplicateAction.replace),
-            child: Text(l.t('import_duplicate_replace')),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -576,8 +523,6 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
           ),
         ],
       ),
-      drawer: const AppDrawer(),
-      drawerEnableOpenDragGesture: false,
       floatingActionButton: FloatingActionButton(
         onPressed: _addRoll,
         child: const Icon(Icons.add),
@@ -652,92 +597,35 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
                                 ],
                               ),
                             )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _filteredRolls.length,
-                              itemBuilder: (context, index) {
-                                final roll = _filteredRolls[index];
-                                final shots =
-                                    (roll['shots'] as List?) ?? [];
-                                return Card(
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(12),
-                                    side: BorderSide(
-                                        color:
-                                            colorScheme.outlineVariant),
-                                  ),
-                                  child: InkWell(
-                                    borderRadius:
-                                        BorderRadius.circular(12),
-                                    onTap: () => _openRoll(roll),
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.all(16),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
+                          : LayoutBuilder(
+                              builder: (context, constraints) {
+                                final cols = constraints.maxWidth > 900 ? 3
+                                    : constraints.maxWidth > 600 ? 2 : 1;
+                                if (cols == 1) {
+                                  return ListView.builder(
+                                    padding: const EdgeInsets.all(16),
+                                    itemCount: _filteredRolls.length,
+                                    itemBuilder: (context, index) =>
+                                        _buildRollCard(_filteredRolls[index], colorScheme, l),
+                                  );
+                                }
+                                return SingleChildScrollView(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      for (int c = 0; c < cols; c++) ...[
+                                        if (c > 0) const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
                                             children: [
-                                              Icon(Icons.camera_roll_outlined,
-                                                  size: 16,
-                                                  color: colorScheme
-                                                      .onSurfaceVariant),
-                                              const SizedBox(width: 6),
-                                              Expanded(
-                                                child: Text(
-                                                    '${roll["brand"]} ${roll["model"]}',
-                                                    style:
-                                                        Theme.of(context)
-                                                            .textTheme
-                                                            .titleSmall),
-                                              ),
-                                              Text(_formatDate(roll),
-                                                  style: TextStyle(
-                                                      fontSize: 11,
-                                                      color: colorScheme
-                                                          .onSurfaceVariant)),
+                                              for (int i = c; i < _filteredRolls.length; i += cols)
+                                                _buildRollCard(_filteredRolls[i], colorScheme, l),
                                             ],
                                           ),
-                                          const SizedBox(height: 4),
-                                          Padding(
-                                            padding:
-                                                const EdgeInsets.only(
-                                                    left: 22),
-                                            child: Text(
-                                                'ISO ${roll["sensitivity"]}'
-                                                ' \u2022 ${l.t("film_shots_count", {"count": shots.length.toString()})}',
-                                                style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: colorScheme
-                                                        .onSurfaceVariant)),
-                                          ),
-                                          if ((roll["comments"]
-                                                      as String?)
-                                                  ?.isNotEmpty ==
-                                              true) ...[
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 12, bottom: 8),
-                                              child: Divider(height: 1, color: colorScheme.outlineVariant),
-                                            ),
-                                            Text(
-                                                roll["comments"]
-                                                    as String,
-                                                maxLines: 2,
-                                                overflow: TextOverflow
-                                                    .ellipsis,
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontStyle: FontStyle
-                                                        .italic,
-                                                    color: colorScheme
-                                                        .onSurfaceVariant)),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 );
                               },
@@ -745,6 +633,69 @@ class _FilmQuickNotePageState extends State<FilmQuickNotePage> {
                     ),
                   ],
                 ),
+    );
+  }
+
+  Widget _buildRollCard(Map<String, dynamic> roll, ColorScheme colorScheme, AppLocalizations l) {
+    final shots = (roll['shots'] as List?) ?? [];
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _openRoll(roll),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.camera_roll_outlined,
+                      size: 16, color: colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                        '${roll["brand"]} ${roll["model"]}',
+                        style: Theme.of(context).textTheme.titleSmall),
+                  ),
+                  Text(_formatDate(roll),
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: colorScheme.onSurfaceVariant)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 22),
+                child: Text(
+                    'ISO ${roll["sensitivity"]}'
+                    ' \u2022 ${l.t("film_shots_count", {"count": shots.length.toString()})}',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: colorScheme.onSurfaceVariant)),
+              ),
+              if ((roll["comments"] as String?)?.isNotEmpty == true) ...[
+                Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 8),
+                  child: Divider(height: 1, color: colorScheme.outlineVariant),
+                ),
+                Text(
+                    roll["comments"] as String,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: colorScheme.onSurfaceVariant)),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 

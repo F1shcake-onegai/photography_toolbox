@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../widgets/app_drawer.dart';
 import '../services/app_localizations.dart';
 
 enum _ColorMode { rgb, hsv, hex }
@@ -290,8 +289,6 @@ class _LightpadPageState extends State<LightpadPage> {
           ),
         ],
       ),
-      drawer: const AppDrawer(),
-      drawerEnableOpenDragGesture: false,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

@@ -9,6 +9,7 @@ import '../services/film_storage.dart';
 import '../services/import_export_service.dart';
 import '../services/light_meter_constants.dart';
 import '../services/location_service.dart';
+import '../services/location_settings.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'map_picker_page.dart';
@@ -81,6 +82,14 @@ class _ShotPageState extends State<ShotPage> {
     _imagePath =
         widget.existingShot?['imagePath'] as String?;
     _resolveImage();
+    if (!_isEditing) _maybeAutoCapture();
+  }
+
+  Future<void> _maybeAutoCapture() async {
+    if (!LocationService.isSupported) return;
+    final auto = await LocationSettings.load();
+    if (!auto || !mounted) return;
+    _captureLocation(silent: true);
   }
 
   Future<void> _loadEcStep() async {
@@ -125,7 +134,7 @@ class _ShotPageState extends State<ShotPage> {
     return '${_ec > 0 ? "+" : ""}${_ec.toStringAsFixed(1)}';
   }
 
-  Future<void> _captureLocation() async {
+  Future<void> _captureLocation({bool silent = false}) async {
     setState(() => _locationLoading = true);
     try {
       final result = await LocationService.getCurrentPosition();
@@ -135,7 +144,8 @@ class _ShotPageState extends State<ShotPage> {
           _longitude = result.$2;
         });
         _syncCoordControllers();
-      } else if (mounted) {
+        _movePreviewMap();
+      } else if (mounted && !silent) {
         final l = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l.t('shot_location_unavailable'))),
@@ -143,7 +153,7 @@ class _ShotPageState extends State<ShotPage> {
       }
     } catch (e, stack) {
       ErrorLog.log('GPS Location', e, stack);
-      if (mounted) {
+      if (mounted && !silent) {
         final l = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(DeveloperSettings.verbose
@@ -161,6 +171,14 @@ class _ShotPageState extends State<ShotPage> {
     _lngCtrl.text = _longitude?.toStringAsFixed(4) ?? '';
   }
 
+  void _movePreviewMap() {
+    if (_latitude == null || _longitude == null) return;
+    try {
+      _previewMapCtrl.move(
+          LatLng(_latitude!, _longitude!), _previewMapCtrl.camera.zoom);
+    } catch (_) {}
+  }
+
   void _onCoordFocusChanged() {
     if (_latFocus.hasFocus || _lngFocus.hasFocus) return;
     // Both lost focus — commit values
@@ -174,10 +192,7 @@ class _ShotPageState extends State<ShotPage> {
         _longitude = cLng;
       });
       _syncCoordControllers();
-      try {
-        _previewMapCtrl.move(
-            LatLng(cLat, cLng), _previewMapCtrl.camera.zoom);
-      } catch (_) {}
+      _movePreviewMap();
     } else if (_latCtrl.text.isEmpty && _lngCtrl.text.isEmpty) {
       setState(() {
         _latitude = null;
@@ -210,6 +225,7 @@ class _ShotPageState extends State<ShotPage> {
         _longitude = result.$2;
       });
       _syncCoordControllers();
+      _movePreviewMap();
     }
   }
 

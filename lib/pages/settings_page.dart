@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../widgets/app_drawer.dart';
 import '../services/aperture_settings.dart';
 import '../services/app_localizations.dart';
 import '../services/import_settings.dart';
 import '../services/light_meter_constants.dart';
 import '../services/locale_settings.dart';
+import '../services/location_settings.dart';
 import '../main.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -19,6 +19,7 @@ class _SettingsPageState extends State<SettingsPage> {
   double _selectedMaxAperture = ApertureSettings.defaultMaxAperture;
   ExposureStep _selectedExposureStep = ExposureStepSettings.defaultStep;
   DuplicateAction _selectedImportAction = ImportSettings.defaultAction;
+  bool _autoLocation = LocationSettings.defaultValue;
   String? _selectedLocale;
   bool _loaded = false;
 
@@ -33,11 +34,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final locale = await LocaleSettings.load();
     final step = await ExposureStepSettings.load();
     final importAction = await ImportSettings.load();
+    final autoLoc = await LocationSettings.load();
     setState(() {
       _selectedMaxAperture = value;
       _selectedLocale = locale;
       _selectedExposureStep = step;
       _selectedImportAction = importAction;
+      _autoLocation = autoLoc;
       _loaded = true;
     });
   }
@@ -46,6 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
     await ApertureSettings.save(_selectedMaxAperture);
     await ExposureStepSettings.save(_selectedExposureStep);
     await ImportSettings.save(_selectedImportAction);
+    await LocationSettings.save(_autoLocation);
     await LocaleSettings.save(_selectedLocale);
     if (mounted) {
       PhotographyToolboxApp.setLocale(context, _selectedLocale);
@@ -73,6 +77,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _selectedMaxAperture = ApertureSettings.defaultMaxAperture;
       _selectedExposureStep = ExposureStepSettings.defaultStep;
       _selectedImportAction = ImportSettings.defaultAction;
+      _autoLocation = LocationSettings.defaultValue;
       _selectedLocale = null;
     });
   }
@@ -91,8 +96,6 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         title: Text(l.t('settings_title')),
       ),
-      drawer: const AppDrawer(),
-      drawerEnableOpenDragGesture: false,
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
           : Padding(
@@ -100,6 +103,11 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                   InkWell(
                     borderRadius: BorderRadius.circular(8),
                     onLongPress: () => Navigator.pushNamed(context, '/developer'),
@@ -111,7 +119,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 8),
-                            Text('Photography Toolbox',
+                            Text('OpenGrains',
                                 style: Theme.of(context).textTheme.headlineSmall),
                             const SizedBox(height: 4),
                             Padding(
@@ -130,9 +138,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             const SizedBox(height: 12),
                             GestureDetector(
                               onTap: () => launchUrl(Uri.parse(
-                                  'https://github.com/F1shcake-onegai/photography_toolbox')),
+                                  'https://github.com/F1shcake-onegai/opengrains')),
                               child: const Text(
-                                'github.com/F1shcake-onegai/photography_toolbox',
+                                'github.com/F1shcake-onegai/opengrains',
                                 style: TextStyle(
                                     color: Colors.blue,
                                     decoration: TextDecoration.underline),
@@ -144,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           TextButton(
                             onPressed: () => showLicensePage(
                               context: context,
-                              applicationName: 'Photography Toolbox',
+                              applicationName: 'OpenGrains',
                               applicationVersion: '1.3.6 (Build Mar 28, 2026)',
                               applicationLegalese: '2026 @f1shcake_onegai',
                             ),
@@ -165,7 +173,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Photography Toolbox',
+                                Text('OpenGrains',
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
@@ -311,9 +319,26 @@ class _SettingsPageState extends State<SettingsPage> {
                         fontSize: 12,
                         color: colorScheme.onSurfaceVariant),
                   ),
+                  const SizedBox(height: 24),
 
-                  const Spacer(),
-
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l.t('settings_auto_location'),
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: colorScheme.onSurface)),
+                    subtitle: Text(l.t('settings_auto_location_desc'),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant)),
+                    value: _autoLocation,
+                    onChanged: (v) => setState(() => _autoLocation = v),
+                  ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(

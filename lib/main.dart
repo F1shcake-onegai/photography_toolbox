@@ -25,10 +25,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
   ]);
   LicenseRegistry.addLicense(() async* {
     final license = await rootBundle.loadString('LICENSE');
-    yield LicenseEntryWithLineBreaks(['Photography Toolbox'], license);
+    yield LicenseEntryWithLineBreaks(['OpenGrains'], license);
   });
   final savedLocale = await LocaleSettings.load();
   await DeveloperSettings.load();
@@ -113,17 +116,17 @@ class _PhotographyToolboxAppState extends State<PhotographyToolboxApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: _navigatorKey,
-      title: 'Photography Toolbox',
+      title: 'OpenGrains',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorSchemeSeed: Colors.blueGrey,
+        colorSchemeSeed: const Color(0xFF6B5B4B),
         brightness: Brightness.light,
         useMaterial3: true,
         fontFamily: 'NotoSans',
         fontFamilyFallback: const ['NotoSansJP', 'NotoSansSC'],
       ),
       darkTheme: ThemeData(
-        colorSchemeSeed: Colors.blueGrey,
+        colorSchemeSeed: const Color(0xFF6B5B4B),
         brightness: Brightness.dark,
         useMaterial3: true,
         fontFamily: 'NotoSans',

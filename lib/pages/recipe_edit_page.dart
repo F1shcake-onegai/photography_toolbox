@@ -197,15 +197,19 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
 
   void _showValidationErrors(List<String> errors) {
     final l = AppLocalizations.of(context);
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.t('recipe_valid_title')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: errors
-              .map((e) => Padding(
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l.t('recipe_valid_title'),
+                  style: Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height: 16),
+              ...errors.map((e) => Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,15 +218,15 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
                         Expanded(child: Text(e)),
                       ],
                     ),
-                  ))
-              .toList(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l.t('recipe_valid_ok')),
+                  )),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(l.t('recipe_valid_ok')),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -732,7 +736,10 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
                 DropdownMenuItem(value: 'color_pos', child: Text(l.t('process_color_pos'))),
                 DropdownMenuItem(value: 'paper', child: Text(l.t('process_paper'))),
               ],
-              onChanged: (v) => setState(() => _processType = v ?? 'bw_neg'),
+              onChanged: (v) => setState(() {
+                _processType = v ?? 'bw_neg';
+                _redSafelight = _processType == 'paper';
+              }),
             ),
             const SizedBox(height: 16),
 

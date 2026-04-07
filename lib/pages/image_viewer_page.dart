@@ -26,7 +26,7 @@ class ImageViewerPage extends StatelessWidget {
   Future<void> _saveToGallery(BuildContext context) async {
     final l = AppLocalizations.of(context);
     try {
-      await Gal.putImage(imagePath, album: 'Photography Toolbox');
+      await Gal.putImage(imagePath, album: 'OpenGrains');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l.t('viewer_saved'))),

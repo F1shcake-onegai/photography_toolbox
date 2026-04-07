@@ -186,7 +186,7 @@ Both recipe and roll list pages share the same pattern via `ListSearchBar` widge
 
 ### Key Patterns
 
-- All feature pages use `AppDrawer` for navigation (with `drawerEnableOpenDragGesture: false` to prevent conflict with back swipe) and have a back button that does `Navigator.pop(context)`. The drawer uses `pushReplacementNamed` to swap between feature pages (keeping Home at the stack bottom).
+- All feature pages have a back button that does `Navigator.pop(context)`. Navigation between features goes through the home page grid.
 - Home page has a gear icon (top-right) linking to Settings. Settings page has a tappable version row that opens the About dialog.
 - Aperture sliders use index-based discrete sliders over the `ApertureSettings.stopsFrom()` list.
 - All slider labels use `SizedBox(width: 56)` for consistent track lengths (except Lightpad and EC sliders).

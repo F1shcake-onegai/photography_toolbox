@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../widgets/app_drawer.dart';
 import '../services/aperture_settings.dart';
 import '../services/app_localizations.dart';
 
@@ -145,12 +144,10 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
         ),
         title: Text(l.t('dof_title')),
       ),
-      drawer: const AppDrawer(),
-      drawerEnableOpenDragGesture: false,
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth > 600;
+          final inputArea = SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -284,11 +281,22 @@ class _DofCalculatorPageState extends State<DofCalculatorPage> {
 
                 ],
               ),
-            ),
-          ),
-          // Result area at the bottom
-          _buildResultArea(colorScheme, l),
-        ],
+            );
+          final resultArea = _buildResultArea(colorScheme, l);
+          return wide
+              ? Row(
+                  children: [
+                    Expanded(child: inputArea),
+                    SizedBox(width: 300, child: resultArea),
+                  ],
+                )
+              : Column(
+                  children: [
+                    Expanded(child: inputArea),
+                    resultArea,
+                  ],
+                );
+        },
       ),
     );
   }

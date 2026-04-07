@@ -132,7 +132,7 @@ class ErrorLog {
     final file = File('${dir.path}/$fileName');
 
     final buf = StringBuffer();
-    buf.writeln('Photography Toolbox Error Log');
+    buf.writeln('OpenGrains Error Log');
     buf.writeln('Exported: ${now.toIso8601String()}');
     buf.writeln('Entries: ${_entries.length}');
     buf.writeln('=' * 60);

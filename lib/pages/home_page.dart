@@ -57,18 +57,29 @@ class HomePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
                   Expanded(
-                    child: GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 200,
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
-                        childAspectRatio: 1.3,
-                      ),
-                      itemCount: _features.length,
-                      itemBuilder: (context, index) {
-                        final feature = _features[index];
-                        return _FeatureCard(feature: feature);
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final crossAxisCount = constraints.maxWidth > 900 ? 4
+                            : constraints.maxWidth > 600 ? 3 : 2;
+                        const spacing = 16.0;
+                        final rows = (_features.length / crossAxisCount).ceil();
+                        final itemWidth = (constraints.maxWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
+                        final itemHeight = (constraints.maxHeight - spacing * (rows - 1)) / rows;
+                        final aspectRatio = itemWidth / itemHeight;
+                        return GridView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            mainAxisSpacing: spacing,
+                            crossAxisSpacing: spacing,
+                            childAspectRatio: aspectRatio.clamp(0.8, 2.5),
+                          ),
+                          itemCount: _features.length,
+                          itemBuilder: (context, index) {
+                            final feature = _features[index];
+                            return _FeatureCard(feature: feature);
+                          },
+                        );
                       },
                     ),
                   ),

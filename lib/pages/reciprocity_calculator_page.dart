@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
-import '../widgets/app_drawer.dart';
 import '../services/app_localizations.dart';
 import '../services/reciprocity_storage.dart';
 
@@ -173,12 +172,10 @@ class _ReciprocityCalculatorPageState
         ),
         title: Text(l.t('reciprocity_title')),
       ),
-      drawer: const AppDrawer(),
-      drawerEnableOpenDragGesture: false,
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth > 600;
+          final inputArea = SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -287,10 +284,22 @@ class _ReciprocityCalculatorPageState
                   ),
                 ],
               ),
-            ),
-          ),
-          _buildResultArea(colorScheme, l),
-        ],
+            );
+          final resultArea = _buildResultArea(colorScheme, l);
+          return wide
+              ? Row(
+                  children: [
+                    Expanded(child: inputArea),
+                    SizedBox(width: 300, child: resultArea),
+                  ],
+                )
+              : Column(
+                  children: [
+                    Expanded(child: inputArea),
+                    resultArea,
+                  ],
+                );
+        },
       ),
     );
   }

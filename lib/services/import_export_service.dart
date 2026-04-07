@@ -280,7 +280,7 @@ class ImportExportService {
     }
 
     throw const FormatException(
-        'Not a recognized Photography Toolbox export file.');
+        'Not a recognized OpenGrains export file.');
   }
 
   static ImportParseResult _validateRecipeData(Map<String, dynamic> data) {

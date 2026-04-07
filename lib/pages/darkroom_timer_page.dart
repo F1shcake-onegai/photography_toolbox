@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../widgets/app_drawer.dart';
 import '../widgets/list_search_bar.dart';
 import '../services/app_localizations.dart';
 import '../services/developer_settings.dart';
@@ -331,18 +330,8 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
         parsed = await ImportExportService.parseImportFile(filePath);
       } on FormatException catch (e) {
         if (mounted) {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text(l.t('import_error')),
-              content: Text(e.message),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${l.t('import_error')}: ${e.message}')),
           );
         }
         return;
@@ -350,18 +339,8 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
 
       if (parsed.type != ExportFileType.recipe) {
         if (mounted) {
-          showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text(l.t('import_error')),
-              content: Text(l.t('import_invalid_file')),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l.t('import_invalid_file'))),
           );
         }
         return;
@@ -370,32 +349,37 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
       // Show preview confirmation
       if (!mounted) return;
       final summary = ImportExportService.previewSummary(parsed);
-      final confirmed = await showDialog<bool>(
+      final confirmed = await showModalBottomSheet<bool>(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(l.t('import_preview_recipe_title')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l.t('import_preview_recipe_film',
-                  {'value': summary['filmStock']!})),
-              Text(l.t('import_preview_recipe_developer',
-                  {'value': summary['developer']!})),
-              Text(l.t('import_preview_recipe_steps',
-                  {'value': summary['steps']!})),
-            ],
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l.t('import_preview_recipe_title'),
+                    style: Theme.of(ctx).textTheme.titleMedium),
+                const SizedBox(height: 16),
+                Text(l.t('import_preview_recipe_film',
+                    {'value': summary['filmStock']!})),
+                Text(l.t('import_preview_recipe_developer',
+                    {'value': summary['developer']!})),
+                Text(l.t('import_preview_recipe_steps',
+                    {'value': summary['steps']!})),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(l.t('import_confirm')),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text(l.t('import_cancel')),
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.t('import_cancel')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l.t('import_confirm')),
-            ),
-          ],
         ),
       );
       if (confirmed != true || !mounted) return;
@@ -442,29 +426,44 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
   }
 
   Future<DuplicateAction?> _showDuplicateDialog(AppLocalizations l) {
-    return showDialog<DuplicateAction>(
+    return showModalBottomSheet<DuplicateAction>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.t('import_duplicate_title')),
-        content: Text(l.t('import_duplicate_message')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l.t('import_cancel')),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(l.t('import_duplicate_title'),
+                  style: Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text(l.t('import_duplicate_message'),
+                  style: TextStyle(
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, DuplicateAction.replace),
+                child: Text(l.t('import_duplicate_replace')),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(ctx, DuplicateAction.duplicate),
+                child: Text(l.t('import_duplicate_copy')),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(ctx, DuplicateAction.skip),
+                child: Text(l.t('import_duplicate_skip')),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(l.t('import_cancel')),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, DuplicateAction.skip),
-            child: Text(l.t('import_duplicate_skip')),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, DuplicateAction.duplicate),
-            child: Text(l.t('import_duplicate_copy')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, DuplicateAction.replace),
-            child: Text(l.t('import_duplicate_replace')),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -580,8 +579,6 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
           ),
         ],
       ),
-      drawer: const AppDrawer(),
-      drawerEnableOpenDragGesture: false,
       floatingActionButton: FloatingActionButton(
         onPressed: _createRecipe,
         child: const Icon(Icons.add),
@@ -654,83 +651,35 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
                                 ],
                               ),
                             )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _filteredRecipes.length,
-                              itemBuilder: (context, index) {
-                                final recipe = _filteredRecipes[index];
-                                return Card(
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(
-                                        color: colorScheme.outlineVariant),
-                                  ),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(12),
-                                    onTap: () => _startTimer(recipe),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            crossAxisAlignment: CrossAxisAlignment.center,
+                          : LayoutBuilder(
+                              builder: (context, constraints) {
+                                final cols = constraints.maxWidth > 900 ? 3
+                                    : constraints.maxWidth > 600 ? 2 : 1;
+                                if (cols == 1) {
+                                  return ListView.builder(
+                                    padding: const EdgeInsets.all(16),
+                                    itemCount: _filteredRecipes.length,
+                                    itemBuilder: (context, index) =>
+                                        _buildRecipeCard(_filteredRecipes[index], colorScheme, l),
+                                  );
+                                }
+                                return SingleChildScrollView(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      for (int c = 0; c < cols; c++) ...[
+                                        if (c > 0) const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
                                             children: [
-                                              Expanded(
-                                                child: _buildRecipeTitles(
-                                                    context, recipe, colorScheme),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.edit_outlined,
-                                                    size: 20),
-                                                onPressed: () =>
-                                                    _editRecipe(recipe),
-                                                visualDensity:
-                                                    VisualDensity.compact,
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.copy_outlined,
-                                                    size: 20),
-                                                tooltip:
-                                                    l.t('recipe_duplicate'),
-                                                onPressed: () =>
-                                                    _duplicateRecipe(recipe),
-                                                visualDensity:
-                                                    VisualDensity.compact,
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.share_outlined,
-                                                    size: 20),
-                                                onPressed: () =>
-                                                    _shareRecipe(recipe),
-                                                visualDensity:
-                                                    VisualDensity.compact,
-                                              ),
+                                              for (int i = c; i < _filteredRecipes.length; i += cols)
+                                                _buildRecipeCard(_filteredRecipes[i], colorScheme, l),
                                             ],
                                           ),
-                                          if ((recipe['notes'] as String? ?? '').isNotEmpty) ...[
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 12, bottom: 8),
-                                              child: Divider(height: 1, color: colorScheme.outlineVariant),
-                                            ),
-                                            Text(
-                                              recipe['notes'] as String,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: colorScheme.onSurfaceVariant,
-                                                fontStyle: FontStyle.italic,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 );
                               },
@@ -738,6 +687,68 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
                     ),
                   ],
                 ),
+    );
+  }
+
+  Widget _buildRecipeCard(Map<String, dynamic> recipe, ColorScheme colorScheme, AppLocalizations l) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _startTimer(recipe),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: _buildRecipeTitles(context, recipe, colorScheme),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, size: 20),
+                    onPressed: () => _editRecipe(recipe),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy_outlined, size: 20),
+                    tooltip: l.t('recipe_duplicate'),
+                    onPressed: () => _duplicateRecipe(recipe),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.share_outlined, size: 20),
+                    onPressed: () => _shareRecipe(recipe),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
+              ),
+              if ((recipe['notes'] as String? ?? '').isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 8),
+                  child: Divider(height: 1, color: colorScheme.outlineVariant),
+                ),
+                Text(
+                  recipe['notes'] as String,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 

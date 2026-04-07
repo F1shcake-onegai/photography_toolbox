@@ -100,7 +100,6 @@ lib/
     light_meter_constants.dart    # Photography value lists, EV math, exposure step settings
     locale_settings.dart          # Persists locale preference
   widgets/
-    app_drawer.dart               # Navigation drawer for feature pages
     list_search_bar.dart          # Shared search field + filter chip row
 assets/
   i18n/

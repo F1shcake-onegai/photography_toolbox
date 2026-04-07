@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/app_localizations.dart';
-import '../widgets/app_drawer.dart';
 
 class ChemicalMixerPage extends StatefulWidget {
   final String? prefillDilution;
@@ -149,12 +148,10 @@ class _ChemicalMixerPageState extends State<ChemicalMixerPage> {
         ),
         title: Text(l.t('mixer_title')),
       ),
-      drawer: const AppDrawer(),
-      drawerEnableOpenDragGesture: false,
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth > 600;
+          final inputArea = SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -270,11 +267,8 @@ class _ChemicalMixerPageState extends State<ChemicalMixerPage> {
                   ),
                 ],
               ),
-            ),
-          ),
-
-          // Result card pinned to bottom
-          Container(
+            );
+          final resultArea = Container(
             width: double.infinity,
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerHighest,
@@ -344,8 +338,21 @@ class _ChemicalMixerPageState extends State<ChemicalMixerPage> {
                               color: colorScheme.onSurfaceVariant)),
                     ),
                   ),
-          ),
-        ],
+          );
+          return wide
+              ? Row(
+                  children: [
+                    Expanded(child: inputArea),
+                    SizedBox(width: 300, child: resultArea),
+                  ],
+                )
+              : Column(
+                  children: [
+                    Expanded(child: inputArea),
+                    resultArea,
+                  ],
+                );
+        },
       ),
     );
   }
