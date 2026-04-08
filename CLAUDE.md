@@ -54,6 +54,8 @@ A `GestureDetector` in `MaterialApp.builder` dismisses the keyboard on tap outsi
 - `FileIntentService` — platform channel bridge (`photography_toolbox/file_intent`) for handling OS "Open with…" file associations. Cold start uses `MethodChannel.getInitialFile`; warm start uses `EventChannel` stream. Native code (Kotlin/Swift) copies content:// or security-scoped URLs to temp cache files. Pages check `FileIntentService.pendingFilePath` after loading to auto-trigger import.
 - `ImportSettings` — persists default duplicate import action (`ask`/`replace`/`skip`/`duplicate`) in SharedPreferences.
 - `LocaleSettings` — persists locale preference (`null` = follow system).
+- `LocationSettings` — persists auto-capture location preference in SharedPreferences with static cache (loaded at app startup).
+- `LocationService` — static methods for GPS: `isSupported`, `ensurePermission()`, `getCurrentPosition()` (10s timeout), `formatCoordinates()`.
 
 ### Darkroom Timer
 
@@ -75,15 +77,18 @@ Three-page feature: recipe list → recipe editor → running timer.
 **Recipe list** (`darkroom_timer_page.dart`):
 - Search/sort/filter via `ListSearchBar` widget
 - Auto-tags derived at runtime (internal — used for filtering only, not displayed on cards): process type, developer, film stock, dilution
-- Sort options: Film Stock (A-Z), Date Created (newest), Developer (A-Z)
+- Sort options: Date Created (newest), Date Modified (newest)
 - Recipe cards show edit, duplicate, and share action buttons; duplicate requires confirmation dialog
-- Import button accepts `.ptrecipe`/`.json` files with preview confirmation and duplicate handling
+- Import button accepts `.ptrecipe`/`.json` files with preview bottom sheet and duplicate handling bottom sheet
+- Responsive: masonry multi-column layout on wide screens via `MasonryList` widget
 
 **Recipe editor** (`recipe_edit_page.dart`):
 - Auto-saves on back navigation (no confirm button) via `PopScope`
 - Red delete icon in AppBar (only when editing existing recipe)
 - Step reordering with up/down arrow buttons
 - Process types: B&W Negative, B&W Reversal, Color Negative, Color Reversal, Paper
+- Selecting "Paper" process type auto-enables safelight; switching away auto-disables it
+- Agitation supports "Disable" option
 
 **Timer page** (`timer_running_page.dart`):
 - Apple Clock-style rolling step list with `AnimatedSwitcher` slide-up transitions
@@ -91,7 +96,7 @@ Three-page feature: recipe list → recipe editor → running timer.
 - Agitation phase tracking: initial continuous → repeating (rest → agitate at end of period)
 - Phase transitions trigger haptics + system sounds
 - Push notifications for step completion and agitation starts (`flutter_local_notifications`, skipped on Windows)
-- Safelight mode: full darkroom ColorScheme (deep black + red), auto-activated when recipe allows, tappable toggle
+- Safelight mode: pure `#000000` background (OLED pixels off) + red-only UI elements, auto-activated when recipe allows, tappable toggle
 - `wakelock_plus` keeps screen on during timer
 - Chemical Mixer shortcut in AppBar (beaker icon) when recipe has a dilution — opens mixer pre-filled
 
@@ -105,24 +110,33 @@ Roll list → roll detail → shot editor / image viewer. Displayed as "Quick No
 
 **Roll data model** (`film_rolls.json`):
 - `id` — UUID v4 string (legacy timestamp IDs auto-migrated)
-- `createdAt` — milliseconds since epoch
+- `createdAt`, `modifiedAt` — milliseconds since epoch
+- `title` — optional roll nickname (e.g. "Tokyo Day 1"); displayed as primary card text when set, falls back to "Untitled"
 - `brand`, `model`, `sensitivity` — roll identity fields
-- `ec` — exposure compensation (double, 0.0 default)
+- `pushPull` — push/pull stops (int, 0 default, per-roll)
 - `comments` — free-text notes (auto-saved with 500ms debounce)
-- `shots[]` — ordered by sequence number then createdAt timestamp; each shot has `uuid`, `sequence`, `imagePath`, `comment`, `createdAt`
+- `shots[]` — ordered by sequence number then createdAt timestamp; each shot has `uuid`, `sequence`, `imagePath`, `comment`, `createdAt`, optional `ec` (per-shot exposure compensation), optional `latitude`/`longitude`
 
 **Roll list** (`film_quick_note_page.dart`):
-- Search/sort/filter via `ListSearchBar` widget
-- Auto-tags derived at runtime (internal — used for filtering only, not displayed on cards): brand, model, ISO, exposure compensation (Yes/No)
-- Sort options: Name (A-Z), Date Created (newest), ISO (ascending)
-- Import button accepts `.ptroll`/`.json`/`.zip` files with small-image warnings, preview confirmation, and duplicate handling
+- Search/sort/filter via `ListSearchBar` widget; search includes title field
+- Auto-tags derived at runtime (internal — used for filtering only, not displayed on cards): brand, model, ISO, push/pull (Yes/No)
+- Sort options: Date Created (newest), Date Modified (newest)
+- Card display: line 1 title (or "Untitled"), line 2 brand+model, line 3 ISO+shots
+- Import button accepts `.ptroll`/`.json`/`.zip` files with small-image warnings, preview bottom sheet, and duplicate handling bottom sheet
+- New roll creation via bottom sheet with recent film stock chips (horizontal scroll, max 10) and manual entry (title + brand/model inline + ISO)
+- Extended FAB with "New Film Roll" label
+- Responsive: masonry multi-column layout on wide screens via `MasonryList` widget
 
 **Roll detail** (`roll_detail_page.dart`):
-- Exposure compensation slider (-3 to +3, snaps to exposure step setting) next to ISO input
-- Double-tap EC label to reset to 0
+- Title field at top (editable, auto-saves with debounce)
+- Brand + Model in one row (flex 1:2), ISO field
+- Push/pull slider (-6 to +6, 1-stop increments)
+- Comments field with auto-save
 
-- 3-column shot grid; tap image → image viewer, tap empty → shot editor, long press → editor
-- Share button with shot selection dialog (select all/none, shot count display)
+- Responsive shot grid: 3 columns on phone, 4-6 on wider screens via `LayoutBuilder`
+- Tap image → image viewer, tap empty → shot editor, long press → editor
+- Location pin badge on shot tiles that have GPS coordinates
+- Share button with shot selection via `DraggableScrollableSheet` (select all/none, shot count)
 - Export as `.ptroll` ZIP archive via `share_plus`
 
 **Image viewer** (`image_viewer_page.dart`):
@@ -193,8 +207,15 @@ Both recipe and roll list pages share the same pattern via `ListSearchBar` widge
 - Distance sliders use logarithmic scale (`log10` / `pow(10, v)`).
 - Film rolls and recipes use UUID v4 as string ID (legacy timestamp IDs auto-migrated on load).
 - Lightpad fullscreen exit uses a 2-second long-press with animated ring progress (`_RingPainter`).
+- Calculator pages use `CalculatorLayout` widget (`lib/widgets/responsive_layout.dart`) for side-by-side inputs+results on wide screens, vertical stack on narrow.
+- Recipe/roll list pages use `MasonryList` widget (`lib/widgets/responsive_layout.dart`) for multi-column card layouts on wide screens.
 - Calculator result areas are pinned to the bottom of the screen with structured cards (small label + large bold value) in `surfaceContainerHighest` container with rounded top corners.
 - Camera button in shot page is only shown on mobile (iOS/Android); desktop uses file picker only.
 - `image_picker` camera requires `CAMERA` permission in AndroidManifest.xml and `NSCameraUsageDescription` in iOS Info.plist.
 - iOS xcconfig files use `#include?` (optional include) for `Generated.xcconfig` to avoid build failures on fresh clones.
 - Time inputs in recipe editor use paired minute/second numeric-only boxes (`_buildTimeInput` helper).
+- Input fields use theme-level filled style (`InputDecorationTheme` with `filled: true`, 12px rounded corners, no border). Compact inline value fields use shared helpers from `lib/widgets/input_decorations.dart`: `underlineAlwaysDecoration()` (always-on underline) and `underlineHoverDecoration()` (underline on focus only).
+- Complex dialogs (import preview, duplicate handling, shot selection) use bottom sheets instead of AlertDialogs. Simple confirmations (delete, discard) stay as AlertDialog.
+- Duplicate import bottom sheet is shared via `showDuplicateImportSheet()` in `lib/widgets/import_dialogs.dart`.
+- All orientations are unlocked; home grid adapts columns (2/3/4) by width.
+- Home page grid auto-fits screen using `LayoutBuilder` to calculate dynamic `childAspectRatio`.
