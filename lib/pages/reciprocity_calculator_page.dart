@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 import '../services/app_localizations.dart';
+import '../widgets/responsive_layout.dart';
 import '../services/reciprocity_storage.dart';
 
 class ReciprocityCalculatorPage extends StatefulWidget {
@@ -172,10 +173,8 @@ class _ReciprocityCalculatorPageState
         ),
         title: Text(l.t('reciprocity_title')),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth > 600;
-          final inputArea = SingleChildScrollView(
+      body: CalculatorLayout(
+        inputArea: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -276,7 +275,6 @@ class _ReciprocityCalculatorPageState
                       decoration: InputDecoration(
                         hintText: _formatSliderTime(
                             _meteredTimes[_meteredTimeIndex]),
-                        border: const OutlineInputBorder(),
                         counterText: '',
                       ),
                       onChanged: (_) => setState(() {}),
@@ -284,22 +282,8 @@ class _ReciprocityCalculatorPageState
                   ),
                 ],
               ),
-            );
-          final resultArea = _buildResultArea(colorScheme, l);
-          return wide
-              ? Row(
-                  children: [
-                    Expanded(child: inputArea),
-                    SizedBox(width: 300, child: resultArea),
-                  ],
-                )
-              : Column(
-                  children: [
-                    Expanded(child: inputArea),
-                    resultArea,
-                  ],
-                );
-        },
+            ),
+        resultArea: _buildResultArea(colorScheme, l),
       ),
     );
   }
@@ -391,7 +375,7 @@ class _ReciprocityCalculatorPageState
 
     return DropdownButtonFormField<String>(
       initialValue: _selectedProfileId,
-      decoration: const InputDecoration(border: OutlineInputBorder()),
+      decoration: const InputDecoration(),
       isExpanded: true,
       items: items,
       onChanged: (v) {
@@ -542,7 +526,6 @@ class _CustomFilmSheetState extends State<_CustomFilmSheet> {
               controller: nameCtrl,
               decoration: InputDecoration(
                 labelText: l.t('reciprocity_custom_name'),
-                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -553,7 +536,6 @@ class _CustomFilmSheetState extends State<_CustomFilmSheet> {
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
               decoration: InputDecoration(
                 labelText: l.t('reciprocity_custom_exponent'),
-                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -564,7 +546,6 @@ class _CustomFilmSheetState extends State<_CustomFilmSheet> {
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
               decoration: InputDecoration(
                 labelText: l.t('reciprocity_custom_threshold'),
-                border: const OutlineInputBorder(),
               ),
             ),
           ],

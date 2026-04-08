@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/app_localizations.dart';
+import '../widgets/input_decorations.dart';
 
 enum _ColorMode { rgb, hsv, hex }
 
@@ -548,7 +549,9 @@ class _LightpadPageState extends State<LightpadPage> {
           ),
         ),
         const SizedBox(width: 8),
-        SizedBox(
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: SizedBox(
           width: 40,
           child: TextField(
             controller: controller,
@@ -566,16 +569,9 @@ class _LightpadPageState extends State<LightpadPage> {
               color: cs.onSurface,
               height: 1,
             ),
-            decoration: InputDecoration(
-              enabledBorder: InputBorder.none,
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: cs.primary, width: 2),
-              ),
-              isDense: true,
-              counterText: '',
-              contentPadding: EdgeInsets.zero,
-            ),
+            decoration: underlineAlwaysDecoration(cs),
           ),
+        ),
         ),
       ],
     );
@@ -656,7 +652,6 @@ class _LightpadPageState extends State<LightpadPage> {
       decoration: InputDecoration(
         labelText: l.t('lightpad_hex'),
         prefixText: '#',
-        border: const OutlineInputBorder(),
         isDense: true,
       ),
       onChanged: _onHexChanged,

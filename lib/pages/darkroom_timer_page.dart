@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import '../widgets/import_dialogs.dart';
+import '../widgets/responsive_layout.dart';
 import '../widgets/list_search_bar.dart';
 import '../services/app_localizations.dart';
 import '../services/developer_settings.dart';
@@ -426,46 +428,7 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
   }
 
   Future<DuplicateAction?> _showDuplicateDialog(AppLocalizations l) {
-    return showModalBottomSheet<DuplicateAction>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(l.t('import_duplicate_title'),
-                  style: Theme.of(ctx).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              Text(l.t('import_duplicate_message'),
-                  style: TextStyle(
-                      color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, DuplicateAction.replace),
-                child: Text(l.t('import_duplicate_replace')),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: () => Navigator.pop(ctx, DuplicateAction.duplicate),
-                child: Text(l.t('import_duplicate_copy')),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: () => Navigator.pop(ctx, DuplicateAction.skip),
-                child: Text(l.t('import_duplicate_skip')),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(l.t('import_cancel')),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return showDuplicateImportSheet(context, l);
   }
 
   void _startTimer(Map<String, dynamic> recipe) {
@@ -579,9 +542,10 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _createRecipe,
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: Text(l.t('recipe_new')),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -651,38 +615,10 @@ class _DarkroomTimerPageState extends State<DarkroomTimerPage> {
                                 ],
                               ),
                             )
-                          : LayoutBuilder(
-                              builder: (context, constraints) {
-                                final cols = constraints.maxWidth > 900 ? 3
-                                    : constraints.maxWidth > 600 ? 2 : 1;
-                                if (cols == 1) {
-                                  return ListView.builder(
-                                    padding: const EdgeInsets.all(16),
-                                    itemCount: _filteredRecipes.length,
-                                    itemBuilder: (context, index) =>
-                                        _buildRecipeCard(_filteredRecipes[index], colorScheme, l),
-                                  );
-                                }
-                                return SingleChildScrollView(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      for (int c = 0; c < cols; c++) ...[
-                                        if (c > 0) const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Column(
-                                            children: [
-                                              for (int i = c; i < _filteredRecipes.length; i += cols)
-                                                _buildRecipeCard(_filteredRecipes[i], colorScheme, l),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                );
-                              },
+                          : MasonryList<Map<String, dynamic>>(
+                              items: _filteredRecipes,
+                              itemBuilder: (recipe) =>
+                                  _buildRecipeCard(recipe, colorScheme, l),
                             ),
                     ),
                   ],

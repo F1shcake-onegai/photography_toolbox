@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/aperture_settings.dart';
+import '../widgets/responsive_layout.dart';
 import '../services/app_localizations.dart';
 
 class FlashCalculatorPage extends StatefulWidget {
@@ -176,10 +177,8 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
         ),
         title: Text(l.t('flash_title')),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth > 600;
-          final inputArea = SingleChildScrollView(
+      body: CalculatorLayout(
+        inputArea: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -382,22 +381,8 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
 
                 ],
               ),
-            );
-          final resultArea = _buildResultArea(colorScheme, l);
-          return wide
-              ? Row(
-                  children: [
-                    Expanded(child: inputArea),
-                    SizedBox(width: 300, child: resultArea),
-                  ],
-                )
-              : Column(
-                  children: [
-                    Expanded(child: inputArea),
-                    resultArea,
-                  ],
-                );
-        },
+            ),
+        resultArea: _buildResultArea(colorScheme, l),
       ),
     );
   }
@@ -487,7 +472,6 @@ class _FlashCalculatorPageState extends State<FlashCalculatorPage> {
             ],
             decoration: InputDecoration(
                 hintText: hint,
-                border: const OutlineInputBorder(),
                 counterText: ''),
             maxLength: maxLength,
             onChanged: (_) => setState(() {}),

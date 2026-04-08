@@ -398,7 +398,6 @@ class _LightMeterPageState extends State<LightMeterPage>
                       ],
                       textAlign: TextAlign.center,
                       decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
                         isDense: true,
                         counterText: '',
                       ),

@@ -18,12 +18,14 @@ class RollDetailPage extends StatefulWidget {
 
 class _RollDetailPageState extends State<RollDetailPage> {
   Map<String, dynamic>? _roll;
+  late TextEditingController _titleCtrl;
   late TextEditingController _brandCtrl;
   late TextEditingController _modelCtrl;
   late TextEditingController _isoCtrl;
   late TextEditingController _commentCtrl;
   Timer? _saveTimer;
   final List<FocusNode> _trimFocusNodes = [];
+  late final FocusNode _titleFocus;
   late final FocusNode _brandFocus;
   late final FocusNode _modelFocus;
   late final FocusNode _commentFocus;
@@ -34,10 +36,12 @@ class _RollDetailPageState extends State<RollDetailPage> {
   @override
   void initState() {
     super.initState();
+    _titleCtrl = TextEditingController();
     _brandCtrl = TextEditingController();
     _modelCtrl = TextEditingController();
     _isoCtrl = TextEditingController();
     _commentCtrl = TextEditingController();
+    _titleFocus = _makeTrimNode(_titleCtrl);
     _brandFocus = _makeTrimNode(_brandCtrl);
     _modelFocus = _makeTrimNode(_modelCtrl);
     _commentFocus = _makeTrimNode(_commentCtrl);
@@ -63,6 +67,7 @@ class _RollDetailPageState extends State<RollDetailPage> {
       shots.sort(_compareShots);
       setState(() {
         _roll = roll;
+        _titleCtrl.text = roll['title'] as String? ?? '';
         _brandCtrl.text = roll['brand'] as String? ?? '';
         _modelCtrl.text = roll['model'] as String? ?? '';
         _isoCtrl.text = roll['sensitivity'] as String? ?? '';
@@ -82,6 +87,12 @@ class _RollDetailPageState extends State<RollDetailPage> {
 
   void _saveRoll() {
     if (_roll != null && !_deleted) {
+      final title = _titleCtrl.text.trim();
+      if (title.isNotEmpty) {
+        _roll!['title'] = title;
+      } else {
+        _roll!.remove('title');
+      }
       _roll!['brand'] = _brandCtrl.text;
       _roll!['model'] = _modelCtrl.text;
       _roll!['sensitivity'] = _isoCtrl.text;
@@ -404,6 +415,22 @@ class _RollDetailPageState extends State<RollDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Roll title
+            Text(l.t('film_roll_title'),
+                style: TextStyle(
+                    fontSize: 12, color: colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _titleCtrl,
+              focusNode: _titleFocus,
+              textCapitalization: TextCapitalization.sentences,
+              onChanged: (_) => _onFieldChanged(),
+              decoration: InputDecoration(
+                hintText: l.t('film_roll_title_hint'),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Roll info fields — Brand + Model (1:2 ratio)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,7 +451,6 @@ class _RollDetailPageState extends State<RollDetailPage> {
                         onChanged: (_) => _onFieldChanged(),
                         decoration: InputDecoration(
                           hintText: l.t('film_brand_hint'),
-                          border: OutlineInputBorder(),
                         ),
                       ),
                     ],
@@ -447,7 +473,6 @@ class _RollDetailPageState extends State<RollDetailPage> {
                         onChanged: (_) => _onFieldChanged(),
                         decoration: InputDecoration(
                           hintText: l.t('film_model_hint'),
-                          border: OutlineInputBorder(),
                         ),
                       ),
                     ],
@@ -477,7 +502,6 @@ class _RollDetailPageState extends State<RollDetailPage> {
                         onChanged: (_) => _onFieldChanged(),
                         decoration: InputDecoration(
                           hintText: l.t('film_sensitivity_hint'),
-                          border: OutlineInputBorder(),
                         ),
                       ),
                     ],
@@ -547,7 +571,6 @@ class _RollDetailPageState extends State<RollDetailPage> {
               onChanged: (_) => _onFieldChanged(),
               decoration: InputDecoration(
                 hintText: l.t('roll_comments_hint'),
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 24),

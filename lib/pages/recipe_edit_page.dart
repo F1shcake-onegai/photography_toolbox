@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/app_localizations.dart';
+import '../widgets/input_decorations.dart';
 import '../services/recipe_storage.dart';
 
 class RecipeEditPage extends StatefulWidget {
@@ -310,7 +311,9 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
         onCommit?.call();
       }
     });
-    return SizedBox(
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: SizedBox(
       width: 36,
       child: TextField(
         controller: controller,
@@ -328,18 +331,12 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
           color: cs.onSurface,
           height: 1,
         ),
-        decoration: InputDecoration(
-          enabledBorder: InputBorder.none,
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: cs.primary, width: 2),
-          ),
-          isDense: true,
-          counterText: '',
-          contentPadding: EdgeInsets.zero,
+        decoration: underlineAlwaysDecoration(cs,
           hintText: hint,
           hintStyle: TextStyle(color: cs.onSurfaceVariant.withAlpha(100)),
         ),
       ),
+    ),
     );
   }
 
@@ -356,7 +353,9 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
         onCommit?.call(v);
       }
     });
-    return Row(
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -378,15 +377,7 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
               color: cs.onSurface,
               height: 1,
             ),
-            decoration: InputDecoration(
-              enabledBorder: InputBorder.none,
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: cs.primary, width: 2),
-              ),
-              isDense: true,
-              counterText: '',
-              contentPadding: EdgeInsets.zero,
-            ),
+            decoration: underlineAlwaysDecoration(cs),
           ),
         ),
         if (suffix != null) ...[
@@ -395,6 +386,7 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
               fontSize: 12, color: cs.onSurfaceVariant)),
         ],
       ],
+    ),
     );
   }
 
@@ -682,7 +674,6 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
               focusNode: _filmStockFocus,
               decoration: InputDecoration(
                 hintText: l.t('recipe_film_stock_hint'),
-                border: const OutlineInputBorder(),
               ),
               onChanged: (_) => setState(() {}),
             ),
@@ -698,7 +689,6 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
               focusNode: _developerFocus,
               decoration: InputDecoration(
                 hintText: l.t('recipe_developer_hint'),
-                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
@@ -713,7 +703,6 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
               focusNode: _dilutionFocus,
               decoration: InputDecoration(
                 hintText: l.t('recipe_dilution_hint'),
-                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
@@ -726,7 +715,6 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
             DropdownButtonFormField<String>(
               initialValue: _processType,
               decoration: const InputDecoration(
-                border: OutlineInputBorder(),
                 isDense: true,
               ),
               items: [
@@ -754,7 +742,6 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
               maxLines: 2,
               decoration: InputDecoration(
                 hintText: l.t('recipe_notes_hint'),
-                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
@@ -942,8 +929,7 @@ class _RecipeEditPageState extends State<RecipeEditPage> {
                                 focusNode: fn,
                                 decoration: InputDecoration(
                                   hintText: l.t('recipe_step_label_hint'),
-                                  border: const OutlineInputBorder(),
-                                  isDense: true,
+                                                    isDense: true,
                                 ),
                                 onChanged: (v) => step['label'] = v,
                               );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/app_localizations.dart';
+import '../widgets/responsive_layout.dart';
 
 class ChemicalMixerPage extends StatefulWidget {
   final String? prefillDilution;
@@ -148,10 +149,8 @@ class _ChemicalMixerPageState extends State<ChemicalMixerPage> {
         ),
         title: Text(l.t('mixer_title')),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth > 600;
-          final inputArea = SingleChildScrollView(
+      body: CalculatorLayout(
+        inputArea: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -213,7 +212,6 @@ class _ChemicalMixerPageState extends State<ChemicalMixerPage> {
                                     RegExp(r'[\d.]')),
                               ],
                               decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
                                 isDense: true,
                               ),
                               onChanged: (_) => setState(() {}),
@@ -258,7 +256,6 @@ class _ChemicalMixerPageState extends State<ChemicalMixerPage> {
                           RegExp(r'[\d.]')),
                     ],
                     decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
                       isDense: true,
                       suffixText: 'ml',
                       hintText: l.t('mixer_volume_hint'),
@@ -267,8 +264,8 @@ class _ChemicalMixerPageState extends State<ChemicalMixerPage> {
                   ),
                 ],
               ),
-            );
-          final resultArea = Container(
+            ),
+        resultArea: Container(
             width: double.infinity,
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerHighest,
@@ -338,21 +335,7 @@ class _ChemicalMixerPageState extends State<ChemicalMixerPage> {
                               color: colorScheme.onSurfaceVariant)),
                     ),
                   ),
-          );
-          return wide
-              ? Row(
-                  children: [
-                    Expanded(child: inputArea),
-                    SizedBox(width: 300, child: resultArea),
-                  ],
-                )
-              : Column(
-                  children: [
-                    Expanded(child: inputArea),
-                    resultArea,
-                  ],
-                );
-        },
+          ),
       ),
     );
   }

@@ -8,6 +8,7 @@ import '../services/error_log.dart';
 import '../services/film_storage.dart';
 import '../services/import_export_service.dart';
 import '../services/light_meter_constants.dart';
+import '../widgets/input_decorations.dart';
 import '../services/location_service.dart';
 import '../services/location_settings.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -85,10 +86,9 @@ class _ShotPageState extends State<ShotPage> {
     if (!_isEditing) _maybeAutoCapture();
   }
 
-  Future<void> _maybeAutoCapture() async {
+  void _maybeAutoCapture() {
     if (!LocationService.isSupported) return;
-    final auto = await LocationSettings.load();
-    if (!auto || !mounted) return;
+    if (!LocationSettings.value) return;
     _captureLocation(silent: true);
   }
 
@@ -385,29 +385,22 @@ class _ShotPageState extends State<ShotPage> {
                               color: colorScheme.onSurfaceVariant)),
                       const SizedBox(height: 6),
                       Padding(
-                        padding: const EdgeInsets.only(top: 14),
+                        padding: const EdgeInsets.only(top: 4),
                         child: TextField(
                           controller: _seqCtrl,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly
-                          ],
-                          textAlign: TextAlign.left,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                          decoration: InputDecoration(
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(
-                                  color: colorScheme.primary, width: 2),
-                            ),
-                            isDense: true,
-                            contentPadding:
-                                const EdgeInsets.only(left: 16, bottom: 4),
-                          ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        textAlign: TextAlign.left,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                        decoration: const InputDecoration(
+                          isDense: true,
                         ),
+                      ),
                       ),
                     ],
                   ),
@@ -594,7 +587,7 @@ class _ShotPageState extends State<ShotPage> {
                   ),
                   const SizedBox(width: 6),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.only(top: 4, bottom: 4),
                     child: SizedBox(
                     width: 90,
                     child: TextField(
@@ -611,16 +604,7 @@ class _ShotPageState extends State<ShotPage> {
                         fontSize: 14,
                         color: colorScheme.onSurface,
                       ),
-                      decoration: InputDecoration(
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                              color: colorScheme.primary, width: 2),
-                        ),
-                        isDense: true,
-                        contentPadding:
-                            const EdgeInsets.only(bottom: 4),
-                      ),
+                      decoration: underlineHoverDecoration(colorScheme),
                     ),
                   ),
                   ),
@@ -641,7 +625,7 @@ class _ShotPageState extends State<ShotPage> {
                   ),
                   const SizedBox(width: 6),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.only(top: 4, bottom: 4),
                     child: SizedBox(
                     width: 90,
                     child: TextField(
@@ -658,16 +642,7 @@ class _ShotPageState extends State<ShotPage> {
                         fontSize: 14,
                         color: colorScheme.onSurface,
                       ),
-                      decoration: InputDecoration(
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                              color: colorScheme.primary, width: 2),
-                        ),
-                        isDense: true,
-                        contentPadding:
-                            const EdgeInsets.only(bottom: 4),
-                      ),
+                      decoration: underlineHoverDecoration(colorScheme),
                     ),
                   ),
                   ),
@@ -724,7 +699,6 @@ class _ShotPageState extends State<ShotPage> {
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: l.t('shot_comment_hint'),
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 24),

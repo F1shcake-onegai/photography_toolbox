@@ -8,6 +8,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../services/app_localizations.dart';
 import 'chemical_mixer_page.dart';
+import '../widgets/input_decorations.dart';
 
 // ───── Safelight darkroom palette ─────
 const _slBg = Color(0xFF000000);
@@ -817,7 +818,9 @@ class _TimerRunningPageState extends State<TimerRunningPage>
                               fontWeight: FontWeight.bold,
                               color: cs.onSurfaceVariant))
                     else ...[
-                      IntrinsicWidth(
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: IntrinsicWidth(
                         child: TextField(
                           controller: _tempCtrl,
                           focusNode: _tempFocus,
@@ -835,21 +838,15 @@ class _TimerRunningPageState extends State<TimerRunningPage>
                               fontWeight: FontWeight.bold,
                               color: cs.onSurface,
                               height: 1),
-                          decoration: InputDecoration(
-                            counterText: '',
+                          decoration: underlineAlwaysDecoration(cs,
                             suffixText: '\u00b0C',
                             suffixStyle:
                                 TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: cs.primary, width: 2),
-                            ),
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
                           ),
                           onChanged: (_) => _onTempChanged(),
                           enabled: !_isRunning,
                         ),
+                      ),
                       ),
                       if (_actualTemp != _baseTemp) ...[
                         const SizedBox(width: 8),

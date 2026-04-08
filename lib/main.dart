@@ -9,6 +9,7 @@ import 'services/import_export_service.dart';
 import 'services/developer_settings.dart';
 import 'services/error_log.dart';
 import 'services/locale_settings.dart';
+import 'services/location_settings.dart';
 import 'pages/developer_page.dart';
 import 'pages/home_page.dart';
 import 'pages/flash_calculator_page.dart';
@@ -36,6 +37,7 @@ void main() async {
   final savedLocale = await LocaleSettings.load();
   await DeveloperSettings.load();
   await ErrorLog.load();
+  await LocationSettings.load();
   runApp(PhotographyToolboxApp(initialLocale: savedLocale));
 }
 
@@ -124,6 +126,13 @@ class _PhotographyToolboxAppState extends State<PhotographyToolboxApp> {
         useMaterial3: true,
         fontFamily: 'NotoSans',
         fontFamilyFallback: const ['NotoSansJP', 'NotoSansSC'],
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
       darkTheme: ThemeData(
         colorSchemeSeed: const Color(0xFF6B5B4B),
@@ -131,6 +140,13 @@ class _PhotographyToolboxAppState extends State<PhotographyToolboxApp> {
         useMaterial3: true,
         fontFamily: 'NotoSans',
         fontFamilyFallback: const ['NotoSansJP', 'NotoSansSC'],
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
       themeMode: ThemeMode.system,
       locale: _locale,
